@@ -17,3 +17,17 @@ const observer = new IntersectionObserver((entries) => {
 
 document.querySelectorAll('.reveal').forEach((element) => observer.observe(element));
 
+const sidebar = document.querySelector('.app-sidebar');
+const sidebarToggle = document.querySelector('.sidebar-toggle');
+sidebarToggle?.addEventListener('click', () => {
+  const collapsed = sidebar.classList.toggle('collapsed');
+  sidebarToggle.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+});
+
+document.querySelectorAll('.sidebar-link').forEach((link) => {
+  link.addEventListener('click', () => {
+    document.querySelectorAll('.sidebar-link').forEach((item) => item.classList.remove('active'));
+    link.classList.add('active');
+  });
+});
+
