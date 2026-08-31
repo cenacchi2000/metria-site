@@ -102,3 +102,11 @@ function handleAnswer(answer) {
 quickReplies?.addEventListener('click', (event) => { const button = event.target.closest('button'); if (button) handleAnswer(button.dataset.answer); });
 chatForm?.addEventListener('submit', (event) => { event.preventDefault(); const value = chatInput.value.trim(); if (!value) return; chatInput.value = ''; handleAnswer(value); });
 
+document.querySelectorAll('.audience-tab').forEach((tab) => {
+  tab.addEventListener('click', () => {
+    const audience = tab.dataset.audience;
+    document.querySelectorAll('.audience-tab').forEach((item) => { item.classList.toggle('active', item === tab); item.setAttribute('aria-selected', item === tab ? 'true' : 'false'); });
+    document.querySelectorAll('.pricing-panel').forEach((panel) => panel.classList.toggle('active', panel.dataset.panel === audience));
+  });
+});
+
