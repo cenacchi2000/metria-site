@@ -77,7 +77,8 @@ function updateTwin(answer) {
   const labels = ['Mapping', 'Emerging', 'Observed', 'Defined'];
   values.forEach((value, index) => { value.textContent = labels[Math.min(Math.floor(twinAnswers.length / 3), 3)]; });
   const insights = ['Your twin is beginning to connect routine, goals and context.', 'A clearer pattern is emerging across your answers.', 'Metria can now prioritise small, explainable next steps.', 'Your demo twin is populated with 100 mapped signals.'];
-  recommendationBox.querySelector('p').textContent = insights[Math.min(Math.floor(twinAnswers.length / 3), 3)];
+  const recommendations = ['Start with one short daily check-in so the twin can learn what matters to you.', 'Compare your preferred routine with your actual routine before changing anything.', 'Choose one small, reversible experiment this week and review how it feels.', 'Review the mapped signals and confidence with a qualified professional before using them for health decisions.'];
+  recommendationBox.querySelector('p').textContent = `${insights[Math.min(Math.floor(twinAnswers.length / 3), 3)]} ${recommendations[Math.min(Math.floor(twinAnswers.length / 3), 3)]}`;
 }
 
 function askNext() {
