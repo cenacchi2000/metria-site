@@ -31,6 +31,10 @@ document.querySelectorAll('.sidebar-link').forEach((link) => {
   });
 });
 
+document.querySelectorAll('a').forEach((link) => {
+  if (link.textContent.includes('Discover our vision')) link.href = 'vision.html';
+});
+
 const twinQuestions = [
   ['What would you like this twin to understand about you first?', ['My daily routine', 'My wellbeing goals', 'My environment']],
   ['How would you describe your current energy most days?', ['Steady', 'Variable', 'Low', 'Prefer not to say']],
