@@ -23,7 +23,7 @@
     <div class="sidebar-group">
       <span class="sidebar-label">Workspace</span>
       <a class="sidebar-link active" href="#top"><span class="sidebar-icon">◉</span>Explore</a>
-      <a class="sidebar-link" href="#original-twin"><span class="sidebar-icon">✦</span>Assistant</a>
+      <a class="sidebar-link" href="#twin-demo"><span class="sidebar-icon">✦</span>Assistant</a>
       <a class="sidebar-link" href="#about"><span class="sidebar-icon">▱</span>My Library</a>
       <a class="sidebar-link" href="#approach"><span class="sidebar-icon">♧</span>Researchers</a>
       <a class="sidebar-link" href="#contact"><span class="sidebar-icon">⚙</span>Settings</a>
@@ -80,14 +80,14 @@
         <div class="twin-workspace">
           <div class="twin-chat">
             <div class="chat-header"><div class="chat-agent"><span class="agent-orb">✦</span><div><strong>Metria Assistant</strong><small>Evidence Twin intake · local demo</small></div></div><span class="secure-pill">⌁ Private demo</span></div>
-            <div class="chat-messages" id="chatMessages"><div class="chat-message assistant"><span class="message-avatar">M</span><div><p>Welcome. I’ll ask 10 short questions across 10 areas of your context. You can answer naturally, choose an option, or skip anything you prefer not to share.</p><span class="message-time">Ready when you are</span></div></div></div>
+            <div class="chat-messages" id="chatMessages"><div class="chat-message assistant"><span class="message-avatar">M</span><div><p>Welcome. I’ll ask 45 structured questions across sleep, body, mood, environment, history and goals of your context. You can answer naturally, choose an option, or skip anything you prefer not to share.</p><span class="message-time">Ready when you are</span></div></div></div>
             <div class="quick-replies" id="quickReplies"><button type="button" data-answer="Start the guided intake">Start guided intake <span>↗</span></button><button type="button" data-answer="Show me an example twin">Show an example <span>◈</span></button></div>
             <form class="chat-composer" id="chatForm"><input id="chatInput" autocomplete="off" placeholder="Tell Metria about yourself…" aria-label="Message Metria Assistant" /><button type="submit" aria-label="Send message">↑</button></form>
             <div class="demo-disclaimer">Demo only · not medical advice · do not enter identifying or urgent health information.</div>
           </div>
           <div class="twin-panel">
             <div class="twin-panel-top"><div><span class="panel-kicker">YOUR EVIDENCE TWIN</span><h3 id="twinName">A living context model</h3></div><span class="twin-status"><i></i><span id="twinStatus">Awaiting input</span></span></div>
-            <div class="twin-visual"><div class="twin-sphere"><div class="sphere-core">M</div><span class="sphere-dot dot-1"></span><span class="sphere-dot dot-2"></span><span class="sphere-dot dot-3"></span><span class="sphere-dot dot-4"></span></div><div class="twin-ring ring-1"></div><div class="twin-ring ring-2"></div></div>
+            <div class="twin-visual human-twin-visual"><div class="twin-body-glow"></div><svg class="twin-human" viewBox="0 0 180 250" role="img" aria-label="Human digital twin silhouette"><circle cx="90" cy="31" r="24"/><path d="M62 98c3-20 13-31 28-31s25 11 28 31l15 52-22-8-7 88H76l-7-88-22 8 15-52Z"/><path d="M72 112 52 179M108 112l20 67"/><circle class="signal-point point-head" cx="90" cy="31" r="7"/><circle class="signal-point point-chest" cx="90" cy="91" r="8"/><circle class="signal-point point-body" cx="90" cy="149" r="8"/></svg><span class="twin-body-label label-head">Cognitive context <b id="headScore">—</b></span><span class="twin-body-label label-chest">Current state <b id="chestScore">—</b></span><span class="twin-body-label label-body">Daily rhythm <b id="bodyScore">—</b></span></div>
             <div class="twin-progress"><div><span>Profile completeness</span><strong id="progressValue">0%</strong></div><div class="progress-track"><span id="progressBar"></span></div><small><span id="answeredCount">0</span> of 100 signals mapped</small></div>
             <div class="twin-domains" id="twinDomains"><div><span>Physical context</span><b>—</b></div><div><span>Daily rhythm</span><b>—</b></div><div><span>Environment</span><b>—</b></div><div><span>Goals & preferences</span><b>—</b></div></div>
             <div class="recommendation-box" id="recommendationBox"><span class="rec-icon">✦</span><div><small>Emerging insight</small><p>Complete the guided intake to generate an explainable, non-clinical summary.</p></div></div>
@@ -97,27 +97,6 @@
     </section>
 
 
-    <section id="twin-studio" class="twin-studio-section reveal">
-      <div class="container">
-        <div class="studio-heading"><div><div class="eyebrow"><span class="pulse"></span> Metria Twin Studio · local prototype</div><h2>A human twin you can<br /><em>question and inspect.</em></h2></div><p>Write naturally about a person’s routines, symptoms, history or goals. The browser maps the words into transparent domains, shows what changed, and keeps uncertainty visible.</p></div>
-        <div class="studio-grid">
-          <section class="studio-chat" aria-label="Twin Studio chat">
-            <div class="studio-chat-top"><div><span class="studio-status"></span><strong>Context Mapper</strong><small>Free local semantic demo · no data leaves this page</small></div><button id="studioReset" type="button">Reset</button></div>
-            <div class="studio-messages" id="studioMessages"><div class="studio-message assistant"><span class="studio-avatar">M</span><p>Tell me something about the person you want to model — for example, “sleep has been irregular and energy drops after lunch”. I’ll map the evidence and explain the next step.</p></div></div>
-            <div class="studio-suggestions"><button type="button" data-studio-prompt="Sleep has been irregular, I sit most of the day, and I want more energy.">Try a realistic example</button><button type="button" data-studio-prompt="My mood is variable, work is stressful, and I want a calmer routine.">Map stress + routine</button></div>
-            <form class="studio-composer" id="studioForm"><textarea id="studioInput" rows="2" placeholder="Describe a signal in your own words…" aria-label="Describe a patient signal"></textarea><button type="submit" aria-label="Map signal">Map <span>↗</span></button></form>
-            <p class="studio-disclaimer">Synthetic demonstration only. Do not enter names, identifiers, diagnoses or urgent medical information.</p>
-          </section>
-          <section class="studio-twin" aria-label="Interactive human digital twin">
-            <div class="studio-twin-top"><div><span class="panel-kicker">PATIENT TWIN / 001</span><h3 id="studioTwinTitle">Awaiting context</h3></div><span class="studio-ready" id="studioReady">EMPTY MODEL</span></div>
-            <div class="body-stage"><div class="body-halo"></div><svg class="human-twin" viewBox="0 0 220 360" role="img" aria-label="Human digital twin"><circle cx="110" cy="51" r="34"/><path d="M73 139c4-28 18-43 37-43s33 15 37 43l20 76-30-12-9 126H92l-9-126-30 12 20-76Z"/><path d="M91 157 63 260M129 157l28 103"/><path class="signal-heart" d="M110 145c-10-10-24 7 0 24 24-17 10-34 0-24Z"/><circle class="signal-brain" cx="110" cy="45" r="12"/><circle class="signal-gut" cx="110" cy="205" r="13"/></svg><span class="body-label label-brain">Cognition <b id="brainScore">—</b></span><span class="body-label label-heart">State <b id="heartScore">—</b></span><span class="body-label label-gut">Rhythm <b id="gutScore">—</b></span></div>
-            <div class="studio-health"><div><span>Model completeness</span><b id="studioCompleteness">0%</b></div><div class="studio-bar"><i id="studioBar"></i></div><small><span id="studioSignals">0</span> mapped signals · <span id="studioConfidence">confidence pending</span></small></div>
-            <div class="studio-domain-grid"><div data-studio-domain="mind"><span>Mind & mood</span><b>Unmapped</b></div><div data-studio-domain="body"><span>Body & movement</span><b>Unmapped</b></div><div data-studio-domain="rhythm"><span>Sleep & rhythm</span><b>Unmapped</b></div><div data-studio-domain="context"><span>Life context</span><b>Unmapped</b></div></div>
-            <div class="studio-recommendation"><span>✦</span><div><small>TRACEABLE NEXT STEP</small><p id="studioRecommendation">Add a free-form observation to see the twin update and receive a bounded, non-clinical recommendation.</p></div></div>
-          </section>
-        </div>
-      </div>
-    </section>
 
     <section id="mapping" class="mapping-section reveal">
       <div class="container">
