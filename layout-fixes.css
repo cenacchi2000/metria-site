@@ -55,9 +55,20 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 }
 @media(max-width:760px){body{padding-left:0!important}}
 
-/* Re-centre the desktop canvas in the visible area beside the sidebar. */
+/* Re-centre the complete page beside the sidebar without translating it past either edge. */
 @media(min-width:761px){
-  .nav-wrap>.container,
-  main>.container,
-  .footer>.container{position:relative;left:clamp(36px,5vw,82px)}
+  body:has(.app-sidebar.collapsed) .nav-wrap>.container,
+  body:has(.app-sidebar.collapsed) main>.container,
+  body:has(.app-sidebar.collapsed) .footer>.container{
+    width:min(1160px,calc(100% - 104px));
+    margin-left:64px;
+    margin-right:40px;
+  }
+  body:has(.app-sidebar:not(.collapsed)) .nav-wrap>.container,
+  body:has(.app-sidebar:not(.collapsed)) main>.container,
+  body:has(.app-sidebar:not(.collapsed)) .footer>.container{
+    width:min(1160px,calc(100% - 128px));
+    margin-left:80px;
+    margin-right:48px;
+  }
 }
