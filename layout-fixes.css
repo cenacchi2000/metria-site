@@ -29,46 +29,46 @@
 .app-sidebar.collapsed>.sidebar-toggle.sidebar-toggle-top:hover{background:#ffaaa5!important;color:#2a1c1f!important;border-color:#ffaaa5!important}
 .app-sidebar.collapsed>.sidebar-toggle.sidebar-toggle-top:focus-visible{outline:2px solid #b9f36c!important;outline-offset:3px!important}
 
-/* Keep the page inside the space left by the fixed rail. */
+/* Stable page shell: reserve the sidebar width exactly once. */
 html,body{width:100%;max-width:100%;overflow-x:hidden}
 .nav-wrap,main,.footer{box-sizing:border-box;max-width:100vw;overflow-x:clip}
-.app-sidebar:not(.collapsed)~.nav-wrap,.app-sidebar:not(.collapsed)~main,.app-sidebar:not(.collapsed)~.footer{width:calc(100% - 238px)}
-.app-sidebar.collapsed~.nav-wrap,.app-sidebar.collapsed~main,.app-sidebar.collapsed~.footer{width:calc(100% - 88px)}
+@media(min-width:761px){
+  body{padding-left:0!important}
+  .nav-wrap,main,.footer{margin-left:238px!important;width:calc(100% - 238px)!important}
+  .app-sidebar.collapsed~.nav-wrap,.app-sidebar.collapsed~main,.app-sidebar.collapsed~.footer{margin-left:88px!important;width:calc(100% - 88px)!important}
+  .nav-wrap>.container,main>.container,.footer>.container{width:min(1160px,calc(100% - 48px));margin-left:auto;margin-right:auto}
+}
 .hero{grid-template-columns:minmax(0,48%) minmax(0,52%)}
 .hero-copy,.hero-visual{min-width:0}
 .hero-visual{overflow:clip}
-.orbit-a{max-width:100%;}
-.orbit-b{max-width:100%;}
-.nav{min-width:0}
-@media(max-width:760px){.app-sidebar~.nav-wrap,.app-sidebar~main,.app-sidebar~.footer{width:100%}.hero-visual{overflow:visible}.hero{grid-template-columns:1fr}}
-
-/* Use the rail as a real page column so it can never cover page content. */
-@media(min-width:761px){
-  body:has(.app-sidebar.collapsed){padding-left:88px}
-  body:has(.app-sidebar:not(.collapsed)){padding-left:238px}
-  body:has(.app-sidebar.collapsed) .nav-wrap,
-  body:has(.app-sidebar.collapsed) main,
-  body:has(.app-sidebar.collapsed) .footer,
-  body:has(.app-sidebar:not(.collapsed)) .nav-wrap,
-  body:has(.app-sidebar:not(.collapsed)) main,
-  body:has(.app-sidebar:not(.collapsed)) .footer{margin-left:0!important;width:auto!important}
+.orbit{border-color:transparent!important;opacity:0!important}
+@media(max-width:1200px) and (min-width:761px){
+  .app-sidebar{width:88px!important;padding:58px 12px 20px!important}
+  .app-sidebar .sidebar-brand{width:38px;height:38px;margin:0 auto 24px;justify-content:center}
+  .app-sidebar .sidebar-brand>span:last-child,.app-sidebar .sidebar-label,.app-sidebar .sidebar-link{font-size:0}
+  .app-sidebar .sidebar-link{width:56px;height:50px;padding:0;justify-content:center}
+  .app-sidebar .sidebar-icon{font-size:21px}
+  .app-sidebar .sidebar-social{width:56px;justify-content:center;gap:0}
+  .app-sidebar .sidebar-toggle{font-size:0}
+  .app-sidebar .sidebar-toggle::after{content:'→';font-size:18px}
+  .nav-wrap,main,.footer{margin-left:88px!important;width:calc(100% - 88px)!important}
+  .hero{grid-template-columns:1fr 1fr;gap:24px;padding-top:45px}
+  .hero h1{font-size:clamp(46px,5.4vw,70px);letter-spacing:-4px}
+  .hero-visual{height:440px}
+  .main-card{width:min(370px,92%)}
+  .original-heading,.demo-heading,.mapping-heading,.services-heading{grid-template-columns:1fr 1fr;gap:28px}
+  .twin-workspace{grid-template-columns:1fr 1fr}
 }
-@media(max-width:760px){body{padding-left:0!important}}
-
-/* Re-centre the complete page beside the sidebar without translating it past either edge. */
-@media(min-width:761px){
-  body:has(.app-sidebar.collapsed) .nav-wrap>.container,
-  body:has(.app-sidebar.collapsed) main>.container,
-  body:has(.app-sidebar.collapsed) .footer>.container{
-    width:min(1160px,calc(100% - 104px));
-    margin-left:64px;
-    margin-right:40px;
-  }
-  body:has(.app-sidebar:not(.collapsed)) .nav-wrap>.container,
-  body:has(.app-sidebar:not(.collapsed)) main>.container,
-  body:has(.app-sidebar:not(.collapsed)) .footer>.container{
-    width:min(1160px,calc(100% - 128px));
-    margin-left:80px;
-    margin-right:48px;
-  }
+@media(max-width:760px){
+  body{padding-left:0!important}
+  .app-sidebar~.nav-wrap,.app-sidebar~main,.app-sidebar~.footer{margin-left:0!important;width:100%!important}
+  .hero{grid-template-columns:1fr}
+  .hero-visual{overflow:visible}
+  .orbit{display:none}
+  .nav{min-width:0}
+  .twin-workspace{grid-template-columns:1fr}
+  .twin-chat{border-right:0;border-bottom:1px solid #393946}
+  .twin-panel{padding:24px 18px 20px}
+  .original-twin-section,.mapping-section,.services-section{overflow:hidden}
+  .pricing-grid,.feature-grid{grid-template-columns:1fr}
 }
