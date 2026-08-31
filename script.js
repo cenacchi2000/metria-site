@@ -228,6 +228,7 @@ let faceStream;
 let faceLandmarker;
 let faceFrame;
 let faceRecorder;
+let faceMeshMode = 'fallback';
 
 function drawFaceMesh(landmarks) {
   if (!faceCanvas || !faceVideo) return;
@@ -259,23 +260,39 @@ function drawFaceMesh(landmarks) {
 
 async function loadFaceLandmarker() {
   if (faceLandmarker) return faceLandmarker;
-  faceStatus.textContent = 'Loading mesh';
+  faceMeshMode = 'loading';
+  faceStatus.textContent = 'Camera on · building mesh';
   const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs');
   const fileset = await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm');
   const options = {runningMode:'VIDEO',numFaces:1,outputFaceBlendshapes:false,outputFacialTransformationMatrixes:false};
   try { faceLandmarker = await vision.FaceLandmarker.createFromOptions(fileset, {baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate:'GPU'},...options}); }
   catch (gpuError) { faceLandmarker = await vision.FaceLandmarker.createFromOptions(fileset, {baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate:'CPU'},...options}); }
+  faceMeshMode = 'landmarker';
   return faceLandmarker;
 }
 
 function trackFace() {
   if (!faceStream || !faceVideo || faceVideo.readyState < 2) { faceFrame = requestAnimationFrame(trackFace); return; }
-  if (!faceLandmarker) { drawFallbackFace(); faceFrame = requestAnimationFrame(trackFace); return; }
-  const result = faceLandmarker.detectForVideo(faceVideo, performance.now());
-  const landmarks = result.faceLandmarks?.[0];
-  drawFaceMesh(landmarks);
-  faceStatus.textContent = landmarks ? 'Live mesh' : 'Looking for face';
-  facePlaceholder.textContent = landmarks ? 'Landmarks tracked locally' : 'Move into view to begin reconstruction';
+  if (!faceLandmarker) {
+    drawFallbackFace();
+    faceStatus.textContent = faceMeshMode === 'loading' ? 'Camera on · building mesh' : 'Camera on · fallback mesh';
+    facePlaceholder.textContent = faceMeshMode === 'loading' ? 'Camera active — refining the local face mesh' : 'Camera active — local fallback mesh';
+    faceFrame = requestAnimationFrame(trackFace);
+    return;
+  }
+  try {
+    const result = faceLandmarker.detectForVideo(faceVideo, performance.now());
+    const landmarks = result.faceLandmarks?.[0];
+    drawFaceMesh(landmarks);
+    faceStatus.textContent = landmarks ? 'Live mesh' : 'Looking for face';
+    facePlaceholder.textContent = landmarks ? 'Landmarks tracked locally' : 'Move into view to begin reconstruction';
+  } catch (error) {
+    faceMeshMode = 'fallback';
+    faceLandmarker = null;
+    drawFallbackFace();
+    faceStatus.textContent = 'Camera on · fallback mesh';
+    facePlaceholder.textContent = 'Camera active — local fallback mesh';
+  }
   faceFrame = requestAnimationFrame(trackFace);
 }
 
@@ -287,7 +304,6 @@ function drawFallbackFace() {
   const cx=width/2, cy=height/2, rx=Math.min(width*.25,82), ry=Math.min(height*.4,88);
   ctx.strokeStyle='#b9f36caa'; ctx.lineWidth=1.2; ctx.shadowColor='#8273df'; ctx.shadowBlur=9; ctx.beginPath(); ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2); ctx.stroke(); ctx.shadowBlur=0;
   [[cx-rx*.45,cy-ry*.18,cx-rx*.1,cy-ry*.18],[cx+rx*.1,cy-ry*.18,cx+rx*.45,cy-ry*.18],[cx,cy-ry*.08,cx,cy+ry*.18],[cx-rx*.32,cy+ry*.42,cx+rx*.32,cy+ry*.42]].forEach(([x1,y1,x2,y2])=>{ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke()});
-  faceStatus.textContent='Camera on · mesh loading'; facePlaceholder.textContent='Camera active — preparing the local face mesh';
 }
 
 startFaceTwin?.addEventListener('click', async () => {
@@ -297,12 +313,23 @@ startFaceTwin?.addEventListener('click', async () => {
     faceStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
     faceVideo.srcObject = faceStream; faceVideo.classList.add('active');
     if (window.MediaRecorder) { faceRecorder = new MediaRecorder(faceStream); faceRecorder.ondataavailable = () => {}; faceRecorder.start(); }
-    await faceVideo.play(); stopFaceTwin.disabled = false; faceStatus.textContent = 'Camera on';
-    try { await loadFaceLandmarker(); faceStatus.textContent = 'Live mesh'; }
-    catch (meshError) { faceStatus.textContent = 'Camera on · fallback mesh'; facePlaceholder.textContent = 'Camera is active; using the local fallback while the face engine retries'; }
+    await faceVideo.play(); stopFaceTwin.disabled = false;
+    faceMeshMode = 'fallback';
+    drawFallbackFace();
+    faceStatus.textContent = 'Camera on · fallback mesh';
+    facePlaceholder.textContent = 'Camera active — local mesh is ready';
     updateTwin('Local face reconstruction');
     addMessage('Your live facial landmark mesh is informing the visual twin locally. No camera frames are uploaded or saved.', 'assistant');
     trackFace();
+    loadFaceLandmarker().then(() => {
+      if (faceStream) faceStatus.textContent = 'Live mesh';
+    }).catch((meshError) => {
+      faceMeshMode = 'fallback';
+      if (faceStream) {
+        faceStatus.textContent = 'Camera on · fallback mesh';
+        facePlaceholder.textContent = 'Camera active — local fallback mesh';
+      }
+    });
   } catch (error) {
     faceStatus.textContent = 'Camera unavailable'; facePlaceholder.textContent = 'Camera permission was not granted or is being used by another app'; startFaceTwin.disabled = false;
     faceStream?.getTracks().forEach((track) => track.stop()); faceStream = null;
@@ -311,6 +338,7 @@ startFaceTwin?.addEventListener('click', async () => {
 stopFaceTwin?.addEventListener('click', () => {
   if (faceRecorder && faceRecorder.state !== 'inactive') faceRecorder.stop(); faceRecorder = null;
   faceStream?.getTracks().forEach((track) => track.stop()); faceStream = null; faceVideo.srcObject = null; faceVideo.classList.remove('active');
+  faceMeshMode = 'fallback';
   if (faceFrame) cancelAnimationFrame(faceFrame); faceFrame = null; faceCanvas?.getContext('2d')?.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
   startFaceTwin.disabled = false; stopFaceTwin.disabled = true; faceStatus.textContent = 'Camera off'; facePlaceholder.textContent = 'Start the camera to create a live face mesh';
 });
