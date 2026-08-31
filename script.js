@@ -260,9 +260,11 @@ function drawFaceMesh(landmarks) {
 async function loadFaceLandmarker() {
   if (faceLandmarker) return faceLandmarker;
   faceStatus.textContent = 'Loading mesh';
-  const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm');
+  const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs');
   const fileset = await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm');
-  faceLandmarker = await vision.FaceLandmarker.createFromOptions(fileset, {baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate:'GPU'},runningMode:'VIDEO',numFaces:1,outputFaceBlendshapes:false,outputFacialTransformationMatrixes:false});
+  const options = {runningMode:'VIDEO',numFaces:1,outputFaceBlendshapes:false,outputFacialTransformationMatrixes:false};
+  try { faceLandmarker = await vision.FaceLandmarker.createFromOptions(fileset, {baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate:'GPU'},...options}); }
+  catch (gpuError) { faceLandmarker = await vision.FaceLandmarker.createFromOptions(fileset, {baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate:'CPU'},...options}); }
   return faceLandmarker;
 }
 
