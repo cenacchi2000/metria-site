@@ -227,6 +227,7 @@ const facePlaceholder = document.querySelector('#facePlaceholder');
 let faceStream;
 let faceLandmarker;
 let faceFrame;
+let faceRecorder;
 
 function drawFaceMesh(landmarks) {
   if (!faceCanvas || !faceVideo) return;
@@ -281,6 +282,7 @@ startFaceTwin?.addEventListener('click', async () => {
     startFaceTwin.disabled = true;
     faceStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
     faceVideo.srcObject = faceStream; faceVideo.classList.add('active');
+    if (window.MediaRecorder) { faceRecorder = new MediaRecorder(faceStream); faceRecorder.ondataavailable = () => {}; faceRecorder.start(); }
     await faceVideo.play(); await loadFaceLandmarker();
     stopFaceTwin.disabled = false; faceStatus.textContent = 'Live mesh';
     updateTwin('Local face reconstruction');
@@ -292,6 +294,7 @@ startFaceTwin?.addEventListener('click', async () => {
   }
 });
 stopFaceTwin?.addEventListener('click', () => {
+  if (faceRecorder && faceRecorder.state !== 'inactive') faceRecorder.stop(); faceRecorder = null;
   faceStream?.getTracks().forEach((track) => track.stop()); faceStream = null; faceVideo.srcObject = null; faceVideo.classList.remove('active');
   if (faceFrame) cancelAnimationFrame(faceFrame); faceFrame = null; faceCanvas?.getContext('2d')?.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
   startFaceTwin.disabled = false; stopFaceTwin.disabled = true; faceStatus.textContent = 'Camera off'; facePlaceholder.textContent = 'Start the camera to create a live face mesh';
