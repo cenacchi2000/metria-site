@@ -269,13 +269,25 @@ async function loadFaceLandmarker() {
 }
 
 function trackFace() {
-  if (!faceStream || !faceLandmarker || !faceVideo || faceVideo.readyState < 2) { faceFrame = requestAnimationFrame(trackFace); return; }
+  if (!faceStream || !faceVideo || faceVideo.readyState < 2) { faceFrame = requestAnimationFrame(trackFace); return; }
+  if (!faceLandmarker) { drawFallbackFace(); faceFrame = requestAnimationFrame(trackFace); return; }
   const result = faceLandmarker.detectForVideo(faceVideo, performance.now());
   const landmarks = result.faceLandmarks?.[0];
   drawFaceMesh(landmarks);
   faceStatus.textContent = landmarks ? 'Live mesh' : 'Looking for face';
   facePlaceholder.textContent = landmarks ? 'Landmarks tracked locally' : 'Move into view to begin reconstruction';
   faceFrame = requestAnimationFrame(trackFace);
+}
+
+function drawFallbackFace() {
+  if (!faceCanvas) return;
+  const width = faceCanvas.clientWidth || 320; const height = faceCanvas.clientHeight || 220; const ratio = window.devicePixelRatio || 1;
+  if (faceCanvas.width !== width * ratio || faceCanvas.height !== height * ratio) { faceCanvas.width = width * ratio; faceCanvas.height = height * ratio; }
+  const ctx = faceCanvas.getContext('2d'); ctx.setTransform(ratio,0,0,ratio,0,0); ctx.clearRect(0,0,width,height);
+  const cx=width/2, cy=height/2, rx=Math.min(width*.25,82), ry=Math.min(height*.4,88);
+  ctx.strokeStyle='#b9f36caa'; ctx.lineWidth=1.2; ctx.shadowColor='#8273df'; ctx.shadowBlur=9; ctx.beginPath(); ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2); ctx.stroke(); ctx.shadowBlur=0;
+  [[cx-rx*.45,cy-ry*.18,cx-rx*.1,cy-ry*.18],[cx+rx*.1,cy-ry*.18,cx+rx*.45,cy-ry*.18],[cx,cy-ry*.08,cx,cy+ry*.18],[cx-rx*.32,cy+ry*.42,cx+rx*.32,cy+ry*.42]].forEach(([x1,y1,x2,y2])=>{ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke()});
+  faceStatus.textContent='Camera on · mesh loading'; facePlaceholder.textContent='Camera active — preparing the local face mesh';
 }
 
 startFaceTwin?.addEventListener('click', async () => {
@@ -285,13 +297,14 @@ startFaceTwin?.addEventListener('click', async () => {
     faceStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
     faceVideo.srcObject = faceStream; faceVideo.classList.add('active');
     if (window.MediaRecorder) { faceRecorder = new MediaRecorder(faceStream); faceRecorder.ondataavailable = () => {}; faceRecorder.start(); }
-    await faceVideo.play(); await loadFaceLandmarker();
-    stopFaceTwin.disabled = false; faceStatus.textContent = 'Live mesh';
+    await faceVideo.play(); stopFaceTwin.disabled = false; faceStatus.textContent = 'Camera on';
+    try { await loadFaceLandmarker(); faceStatus.textContent = 'Live mesh'; }
+    catch (meshError) { faceStatus.textContent = 'Camera on · fallback mesh'; facePlaceholder.textContent = 'Camera is active; using the local fallback while the face engine retries'; }
     updateTwin('Local face reconstruction');
     addMessage('Your live facial landmark mesh is informing the visual twin locally. No camera frames are uploaded or saved.', 'assistant');
     trackFace();
   } catch (error) {
-    faceStatus.textContent = 'Camera unavailable'; facePlaceholder.textContent = 'Camera permission was not granted or the mesh could not load'; startFaceTwin.disabled = false;
+    faceStatus.textContent = 'Camera unavailable'; facePlaceholder.textContent = 'Camera permission was not granted or is being used by another app'; startFaceTwin.disabled = false;
     faceStream?.getTracks().forEach((track) => track.stop()); faceStream = null;
   }
 });
