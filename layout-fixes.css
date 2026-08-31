@@ -13,6 +13,9 @@
 .app-sidebar.collapsed .sidebar-toggle::after{content:'→';font-size:21px;line-height:1}
 .app-sidebar.collapsed .sidebar-toggle:hover{background:#ffaaa5;color:#2a1c1f;border-color:#ffaaa5}
 .app-sidebar.collapsed~.nav-wrap,.app-sidebar.collapsed~main,.app-sidebar.collapsed~.footer{margin-left:88px}
+.sidebar-toggle-top,.app-sidebar.collapsed .sidebar-toggle{width:30px;height:30px;min-width:30px;min-height:30px;border-radius:9px;outline:none;box-shadow:none}
+.sidebar-toggle-top:focus-visible,.app-sidebar.collapsed .sidebar-toggle:focus-visible{outline:2px solid #b9f36c;outline-offset:3px}
+.app-sidebar.collapsed .sidebar-brand{margin-top:2px;margin-bottom:25px}
 .nav-wrap,main,.footer{transition:margin-left .22s ease}
 @media(max-width:900px) and (min-width:761px){.app-sidebar{width:205px}.nav-wrap,main,.footer{margin-left:205px}.app-sidebar.collapsed{width:88px}.app-sidebar.collapsed~.nav-wrap,.app-sidebar.collapsed~main,.app-sidebar.collapsed~.footer{margin-left:88px}.hero{grid-template-columns:1fr 1fr}.hero h1{letter-spacing:-3px}.demo-heading,.mapping-heading,.services-heading{grid-template-columns:52% 48%}.twin-workspace{grid-template-columns:1fr 1fr}.pricing-grid{gap:10px}.price-card{padding:18px}}
 @media(max-width:760px){.container{width:min(100% - 28px,600px)}.hero-visual{overflow:visible}.original-twin-section,.twin-studio-section,.mapping-section,.services-section{overflow:hidden}.studio-heading,.mapping-heading,.demo-heading,.services-heading{margin-bottom:32px}.studio-heading h2,.mapping-heading h2,.demo-heading h2,.services-heading h2{letter-spacing:-2px}.vision-nav{padding-inline:18px}.vision-hero{padding-inline:20px}.vision-hero>p{font-size:15px}.layout{gap:35px}}
