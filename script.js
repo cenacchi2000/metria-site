@@ -216,6 +216,87 @@ stopRecording?.addEventListener('click', () => {
   addMessage('The local video capture has been added as a multimodal evidence event. It was not uploaded or saved.', 'assistant');
 });
 
+// Local face reconstruction. The camera is opt-in; MediaPipe landmarks are processed
+// in this tab only and are rendered as a stylised mesh rather than an identity model.
+const faceVideo = document.querySelector('#faceVideo');
+const faceCanvas = document.querySelector('#faceCanvas');
+const startFaceTwin = document.querySelector('#startFaceTwin');
+const stopFaceTwin = document.querySelector('#stopFaceTwin');
+const faceStatus = document.querySelector('#faceStatus');
+const facePlaceholder = document.querySelector('#facePlaceholder');
+let faceStream;
+let faceLandmarker;
+let faceFrame;
+
+function drawFaceMesh(landmarks) {
+  if (!faceCanvas || !faceVideo) return;
+  const width = faceCanvas.clientWidth || 320;
+  const height = faceCanvas.clientHeight || 220;
+  const ratio = window.devicePixelRatio || 1;
+  if (faceCanvas.width !== width * ratio || faceCanvas.height !== height * ratio) {
+    faceCanvas.width = width * ratio; faceCanvas.height = height * ratio;
+  }
+  const ctx = faceCanvas.getContext('2d'); ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+  if (!landmarks) return;
+  const scale = Math.min(width, height) * .86;
+  const cx = width / 2; const cy = height / 2 + 5;
+  const points = landmarks.map((point) => {
+    const depth = Math.max(-.18, Math.min(.18, point.z || 0));
+    return {x: cx + (point.x - .5) * scale * (1 - depth), y: cy + (point.y - .5) * scale * (1 - depth), z: depth};
+  });
+  const visible = [10, 21, 54, 67, 103, 127, 132, 145, 152, 172, 176, 234, 263, 323, 356, 361, 365, 378, 397, 454];
+  const links = [[10,152],[54,132],[132,176],[176,152],[152,365],[365,454],[454,263],[263,10],[21,54],[21,67],[67,103],[103,10],[21,234],[234,145],[145,172],[172,152],[10,323],[323,356],[356,397],[397,365],[10,21],[10,263]];
+  const glow = ctx.createRadialGradient(cx, cy, 8, cx, cy, scale * .48); glow.addColorStop(0, '#ffaaa588'); glow.addColorStop(.55, '#8273df44'); glow.addColorStop(1, '#8273df00');
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = '#b9f36caa'; ctx.lineWidth = 1.1;
+  links.forEach(([a,b]) => { if (!points[a] || !points[b]) return; ctx.beginPath(); ctx.moveTo(points[a].x, points[a].y); ctx.lineTo(points[b].x, points[b].y); ctx.stroke(); });
+  visible.forEach((index, order) => { const point = points[index]; if (!point) return; ctx.beginPath(); ctx.fillStyle = order % 4 === 0 ? '#ffaaa5' : '#b9f36c'; ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8; ctx.arc(point.x, point.y, order % 4 === 0 ? 2.8 : 2.1, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; });
+  const nose = points[1] || points[4];
+  if (nose) { const tilt = Math.max(-12, Math.min(12, (nose.x - cx) * .12)); faceCanvas.style.setProperty('--face-tilt', `${tilt}deg`); }
+}
+
+async function loadFaceLandmarker() {
+  if (faceLandmarker) return faceLandmarker;
+  faceStatus.textContent = 'Loading mesh';
+  const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm');
+  const fileset = await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm');
+  faceLandmarker = await vision.FaceLandmarker.createFromOptions(fileset, {baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate:'GPU'},runningMode:'VIDEO',numFaces:1,outputFaceBlendshapes:false,outputFacialTransformationMatrixes:false});
+  return faceLandmarker;
+}
+
+function trackFace() {
+  if (!faceStream || !faceLandmarker || !faceVideo || faceVideo.readyState < 2) { faceFrame = requestAnimationFrame(trackFace); return; }
+  const result = faceLandmarker.detectForVideo(faceVideo, performance.now());
+  const landmarks = result.faceLandmarks?.[0];
+  drawFaceMesh(landmarks);
+  faceStatus.textContent = landmarks ? 'Live mesh' : 'Looking for face';
+  facePlaceholder.textContent = landmarks ? 'Landmarks tracked locally' : 'Move into view to begin reconstruction';
+  faceFrame = requestAnimationFrame(trackFace);
+}
+
+startFaceTwin?.addEventListener('click', async () => {
+  if (!navigator.mediaDevices?.getUserMedia) { faceStatus.textContent = 'Camera unavailable'; facePlaceholder.textContent = 'Use HTTPS and a camera-enabled browser'; return; }
+  try {
+    startFaceTwin.disabled = true;
+    faceStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
+    faceVideo.srcObject = faceStream; faceVideo.classList.add('active');
+    await faceVideo.play(); await loadFaceLandmarker();
+    stopFaceTwin.disabled = false; faceStatus.textContent = 'Live mesh';
+    updateTwin('Local face reconstruction');
+    addMessage('Your live facial landmark mesh is informing the visual twin locally. No camera frames are uploaded or saved.', 'assistant');
+    trackFace();
+  } catch (error) {
+    faceStatus.textContent = 'Camera unavailable'; facePlaceholder.textContent = 'Camera permission was not granted or the mesh could not load'; startFaceTwin.disabled = false;
+    faceStream?.getTracks().forEach((track) => track.stop()); faceStream = null;
+  }
+});
+stopFaceTwin?.addEventListener('click', () => {
+  faceStream?.getTracks().forEach((track) => track.stop()); faceStream = null; faceVideo.srcObject = null; faceVideo.classList.remove('active');
+  if (faceFrame) cancelAnimationFrame(faceFrame); faceFrame = null; faceCanvas?.getContext('2d')?.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
+  startFaceTwin.disabled = false; stopFaceTwin.disabled = true; faceStatus.textContent = 'Camera off'; facePlaceholder.textContent = 'Start the camera to create a live face mesh';
+});
+
 // Twin Studio: a transparent, browser-only semantic mapper. It is intentionally not
 // presented as a medical diagnosis or a generative clinical model.
 const studioForm = document.querySelector('#studioForm');
