@@ -41,3 +41,16 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 .orbit-b{max-width:100%;}
 .nav{min-width:0}
 @media(max-width:760px){.app-sidebar~.nav-wrap,.app-sidebar~main,.app-sidebar~.footer{width:100%}.hero-visual{overflow:visible}.hero{grid-template-columns:1fr}}
+
+/* Use the rail as a real page column so it can never cover page content. */
+@media(min-width:761px){
+  body:has(.app-sidebar.collapsed){padding-left:88px}
+  body:has(.app-sidebar:not(.collapsed)){padding-left:238px}
+  body:has(.app-sidebar.collapsed) .nav-wrap,
+  body:has(.app-sidebar.collapsed) main,
+  body:has(.app-sidebar.collapsed) .footer,
+  body:has(.app-sidebar:not(.collapsed)) .nav-wrap,
+  body:has(.app-sidebar:not(.collapsed)) main,
+  body:has(.app-sidebar:not(.collapsed)) .footer{margin-left:0!important;width:auto!important}
+}
+@media(max-width:760px){body{padding-left:0!important}}
