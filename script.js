@@ -36,16 +36,50 @@ document.querySelectorAll('a').forEach((link) => {
 });
 
 const twinQuestions = [
-  ['What would you like this twin to understand about you first?', ['My daily routine', 'My wellbeing goals', 'My environment']],
-  ['How would you describe your current energy most days?', ['Steady', 'Variable', 'Low', 'Prefer not to say']],
-  ['How consistent is your sleep routine?', ['Very consistent', 'Somewhat consistent', 'Still finding a rhythm']],
-  ['Which area would you most like to improve?', ['Focus', 'Movement', 'Recovery', 'Stress management']],
-  ['How active is a typical week for you?', ['Mostly sedentary', 'Lightly active', 'Regularly active', 'Highly active']],
-  ['What kind of support feels most useful?', ['Clear structure', 'Gentle reminders', 'More context', 'Human guidance']],
-  ['How would you describe your usual environment?', ['Calm', 'Busy', 'Changing', 'Prefer not to say']],
-  ['What matters most when Metria makes a suggestion?', ['Explainability', 'Personalisation', 'Privacy', 'Actionability']],
-  ['Would you like your twin to prioritise small daily changes?', ['Yes, keep it practical', 'Yes, but gently', 'Not right now']],
-  ['What is one outcome you would like to move towards?', ['More clarity', 'Better routines', 'Earlier support', 'My own goal']]
+  ['What is your age range?', ['18–29', '30–44', '45–64', '65+', 'Prefer not to say']],
+  ['What pronouns should the twin use?', ['She/her', 'He/him', 'They/them', 'Prefer not to say']],
+  ['What is your main goal for this twin?', ['Understand my wellbeing', 'Prepare for a clinical conversation', 'Improve daily routines', 'Track change over time']],
+  ['How would you describe your energy most days?', ['Steady', 'Variable', 'Often low', 'Prefer not to say']],
+  ['How consistent is your sleep schedule?', ['Very consistent', 'Somewhat consistent', 'Irregular', 'Prefer not to say']],
+  ['How many hours do you usually sleep?', ['Less than 5', '5–6', '7–8', 'More than 8', 'Prefer not to say']],
+  ['How refreshed do you feel on waking?', ['Very refreshed', 'Mostly refreshed', 'Sometimes tired', 'Usually exhausted']],
+  ['How often do you wake during the night?', ['Rarely', 'Sometimes', 'Often', 'Prefer not to say']],
+  ['How would you describe your daytime alertness?', ['Stable', 'Afternoon dip', 'Frequently tired', 'Variable']],
+  ['How active are you in a typical week?', ['Mostly sedentary', 'Lightly active', 'Regularly active', 'Highly active']],
+  ['How much time do you spend sitting?', ['Under 4 hours', '4–7 hours', '8–10 hours', 'Over 10 hours']],
+  ['How often do you walk for at least 20 minutes?', ['Most days', 'A few times weekly', 'Rarely', 'Never']],
+  ['What movement would you like to improve?', ['Strength', 'Mobility', 'Cardio fitness', 'Consistency']],
+  ['How would you describe your appetite?', ['Stable', 'Variable', 'Lower than usual', 'Higher than usual']],
+  ['How regular are your meals?', ['Very regular', 'Mostly regular', 'Irregular', 'Prefer not to say']],
+  ['How would you describe your hydration?', ['Consistent', 'Could improve', 'Often forget', 'Prefer not to say']],
+  ['How would you describe your mood recently?', ['Positive', 'Mostly steady', 'Variable', 'Low', 'Prefer not to say']],
+  ['How often do you feel stressed?', ['Rarely', 'Sometimes', 'Often', 'Almost constantly']],
+  ['How easy is it to focus?', ['Easy', 'Usually manageable', 'Difficult', 'Very difficult']],
+  ['How often do you feel anxious or worried?', ['Rarely', 'Sometimes', 'Often', 'Prefer not to say']],
+  ['How connected do you feel to other people?', ['Very connected', 'Somewhat connected', 'Isolated at times', 'Prefer not to say']],
+  ['What support is available to you?', ['Strong support', 'Some support', 'Limited support', 'Prefer not to say']],
+  ['How would you describe your home environment?', ['Calm', 'Busy', 'Changing', 'Prefer not to say']],
+  ['How would you describe your work or study load?', ['Light', 'Manageable', 'Heavy', 'Changing']],
+  ['How often does work affect your wellbeing?', ['Rarely', 'Sometimes', 'Often', 'Prefer not to say']],
+  ['How predictable is your daily routine?', ['Very predictable', 'Somewhat predictable', 'Unpredictable', 'Prefer not to say']],
+  ['How often do you travel across time zones?', ['Never', 'Occasionally', 'Often', 'Prefer not to say']],
+  ['Do you use caffeine?', ['No', '1 serving daily', '2–3 servings daily', 'More than 3']],
+  ['Do you use nicotine?', ['No', 'Occasionally', 'Regularly', 'Prefer not to say']],
+  ['Do you drink alcohol?', ['No', 'Occasionally', 'Weekly', 'Often', 'Prefer not to say']],
+  ['Are you taking any prescribed medication?', ['No', 'Yes, stable', 'Yes, changing', 'Prefer not to say']],
+  ['Do you have any relevant health history to discuss with a clinician?', ['No known history', 'Yes, stable history', 'Yes, changing history', 'Prefer not to say']],
+  ['Have you noticed a recent change in your health?', ['No change', 'Small change', 'Clear change', 'Prefer not to say']],
+  ['How long has the main pattern been present?', ['Days', 'Weeks', 'Months', 'Longer than a year']],
+  ['What tends to make the pattern better?', ['Rest', 'Movement', 'Social support', 'I am not sure']],
+  ['What tends to make it worse?', ['Poor sleep', 'Stress', 'Workload', 'I am not sure']],
+  ['What outcome matters most to you?', ['More energy', 'Better sleep', 'More focus', 'More stability']],
+  ['What kind of recommendation would you accept?', ['A small daily experiment', 'A weekly review', 'A clinician discussion', 'More information first']],
+  ['How much explanation do you want?', ['Brief', 'Moderate detail', 'Full evidence trace']],
+  ['Should the twin ask before making an inference?', ['Always', 'For sensitive topics', 'Only when confidence is low']],
+  ['What should happen when evidence conflicts?', ['Ask me', 'Show both possibilities', 'Defer to a clinician']],
+  ['Who should be able to see this twin?', ['Only me', 'Me and my clinician', 'A care team after consent']],
+  ['What would make this twin useful?', ['Earlier support', 'Clearer conversations', 'Better self-management', 'Research insight']],
+  ['Would you like to add a guided video conversation?', ['Yes, I consent', 'Not now', 'I want to learn more first']]
 ];
 let twinStep = 0;
 let twinAnswers = [];
@@ -56,6 +90,7 @@ const chatInput = document.querySelector('#chatInput');
 const progressBar = document.querySelector('#progressBar');
 const progressValue = document.querySelector('#progressValue');
 const answeredCount = document.querySelector('#answeredCount');
+if (answeredCount) answeredCount.nextSibling.textContent = ' of 45 questions mapped';
 const twinStatus = document.querySelector('#twinStatus');
 const twinPanel = document.querySelector('.twin-panel');
 const recommendationBox = document.querySelector('#recommendationBox');
@@ -70,7 +105,7 @@ function addMessage(text, role='assistant') {
 
 function updateTwin(answer) {
   twinAnswers.push(answer);
-  const mapped = Math.min(twinAnswers.length * 10, 100);
+  const mapped = Math.min(Math.round((twinAnswers.length / twinQuestions.length) * 100), 100);
   progressBar.style.width = `${mapped}%`;
   progressValue.textContent = `${mapped}%`;
   answeredCount.textContent = mapped;
@@ -83,6 +118,15 @@ function updateTwin(answer) {
   const insights = ['Your twin is beginning to connect routine, goals and context.', 'A clearer pattern is emerging across your answers.', 'Metria can now prioritise small, explainable next steps.', 'Your demo twin is populated with 100 mapped signals.'];
   const recommendations = ['Start with one short daily check-in so the twin can learn what matters to you.', 'Compare your preferred routine with your actual routine before changing anything.', 'Choose one small, reversible experiment this week and review how it feels.', 'Review the mapped signals and confidence with a qualified professional before using them for health decisions.'];
   recommendationBox.querySelector('p').textContent = `${insights[Math.min(Math.floor(twinAnswers.length / 3), 3)]} ${recommendations[Math.min(Math.floor(twinAnswers.length / 3), 3)]}`;
+  const corpus = twinAnswers.join(' ').toLowerCase();
+  const analysis = corpus.includes('irregular') || corpus.includes('often tired') || corpus.includes('low')
+    ? 'Priority pattern: recovery and energy. Start with a consistent sleep window, a short daily movement check-in, and review persistent changes with a qualified clinician.'
+    : corpus.includes('stress') || corpus.includes('anxious') || corpus.includes('heavy')
+      ? 'Priority pattern: load and context. Track when stress changes sleep, mood or focus, then choose one reversible support action and review the evidence.'
+      : 'Emerging pattern: stable context with opportunities for personalised prevention. Keep collecting time-stamped observations before drawing stronger conclusions.';
+  recommendationBox.querySelector('p').textContent = analysis;
+  const score = Math.min(96, 48 + Math.round(mapped * .42));
+  ['headScore','chestScore','bodyScore'].forEach((id, index) => { const node = document.querySelector(`#${id}`); if (node) node.textContent = `${Math.min(99, score + index * 3)}%`; });
 }
 
 function askNext() {
@@ -98,7 +142,7 @@ function askNext() {
 }
 
 function handleAnswer(answer) {
-  if (answer === 'Start the guided intake' || answer === 'Show me an example twin') { addMessage(answer, 'user'); if (answer.includes('example')) { twinStep = 10; twinAnswers = Array.from({length: 10}, () => 'Example signal'); updateTwin('Example signal'); } askNext(); return; }
+  if (answer === 'Start the guided intake' || answer === 'Show me an example twin') { addMessage(answer, 'user'); if (answer.includes('example')) { twinStep = twinQuestions.length; twinAnswers = Array.from({length: twinQuestions.length}, () => 'Example signal'); updateTwin('Example signal'); } askNext(); return; }
   if (answer === 'Restart the demo') { twinStep = 0; twinAnswers = []; progressBar.style.width = '0%'; progressValue.textContent = '0%'; answeredCount.textContent = '0'; twinStatus.textContent = 'Awaiting input'; twinStatus.parentElement.classList.remove('ready'); recommendationBox.querySelector('p').textContent = 'Complete the guided intake to generate an explainable, non-clinical summary.'; addMessage('The demo twin has been reset. Nothing was saved.', 'assistant'); askNext(); return; }
   addMessage(answer, 'user'); updateTwin(answer); askNext();
 }
@@ -139,6 +183,37 @@ document.querySelectorAll('.input-node').forEach((node) => {
   };
   node.addEventListener('click', activate);
   node.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(); } });
+});
+
+// Optional multimodal capture. The camera stream stays in this browser tab and is
+// never uploaded by the static demo.
+const startRecording = document.querySelector('#startRecording');
+const stopRecording = document.querySelector('#stopRecording');
+const videoPreview = document.querySelector('#videoPreview');
+const videoPlaceholder = document.querySelector('#videoPlaceholder');
+let twinMediaStream;
+let twinRecorder;
+startRecording?.addEventListener('click', async () => {
+  try {
+    twinMediaStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+    videoPreview.srcObject = twinMediaStream;
+    videoPreview.parentElement.classList.add('recording');
+    videoPlaceholder.textContent = 'Recording locally…';
+    twinRecorder = new MediaRecorder(twinMediaStream);
+    twinRecorder.start(); startRecording.disabled = true; stopRecording.disabled = false;
+    addMessage('Video conversation started. Answer the next questions naturally, then stop when you are finished.', 'assistant');
+  } catch (error) {
+    videoPlaceholder.textContent = 'Camera permission was not granted';
+  }
+});
+stopRecording?.addEventListener('click', () => {
+  if (twinRecorder && twinRecorder.state !== 'inactive') twinRecorder.stop();
+  twinMediaStream?.getTracks().forEach((track) => track.stop());
+  videoPreview.srcObject = null; videoPreview.parentElement.classList.remove('recording');
+  videoPlaceholder.textContent = 'Video evidence captured locally';
+  startRecording.disabled = false; stopRecording.disabled = true;
+  updateTwin('Guided video conversation');
+  addMessage('The local video capture has been added as a multimodal evidence event. It was not uploaded or saved.', 'assistant');
 });
 
 // Twin Studio: a transparent, browser-only semantic mapper. It is intentionally not
