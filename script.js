@@ -137,3 +137,47 @@ document.querySelectorAll('.input-node').forEach((node) => {
   node.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(); } });
 });
 
+// Twin Studio: a transparent, browser-only semantic mapper. It is intentionally not
+// presented as a medical diagnosis or a generative clinical model.
+const studioForm = document.querySelector('#studioForm');
+const studioInput = document.querySelector('#studioInput');
+const studioMessages = document.querySelector('#studioMessages');
+const studioState = { signals: 0, domains: {mind:0, body:0, rhythm:0, context:0} };
+const escapeHTML = (value) => String(value).replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
+function studioMessage(text, role='assistant') {
+  const item = document.createElement('div'); item.className = `studio-message ${role}`;
+  const avatar = document.createElement('span'); avatar.className = 'studio-avatar'; avatar.textContent = role === 'assistant' ? 'M' : 'Y';
+  const bubble = document.createElement('p'); bubble.textContent = text; item.append(avatar, bubble); studioMessages.appendChild(item); studioMessages.scrollTop = studioMessages.scrollHeight;
+}
+function mapStudioText(raw) {
+  const text = raw.toLowerCase();
+  const rules = [
+    {domain:'rhythm', words:['sleep','rest','bed','wake','tired','energy','routine','lunch'], label:'Sleep & rhythm'},
+    {domain:'body', words:['pain','walk','movement','exercise','active','heart','breath','food','weight','symptom'], label:'Body & movement'},
+    {domain:'mind', words:['mood','stress','anxiety','focus','memory','worry','calm','sad'], label:'Mind & mood'},
+    {domain:'context', words:['work','home','family','environment','support','medication','goal','prefer'], label:'Life context'}
+  ];
+  const hits = rules.filter((rule) => rule.words.some((word) => text.includes(word)));
+  const chosen = hits.length ? hits : [rules[3]];
+  chosen.forEach((rule) => { studioState.domains[rule.domain] += 1; });
+  studioState.signals += Math.min(25, Math.max(1, Math.round(raw.trim().split(/\s+/).length / 3)));
+  const total = Math.min(100, Object.values(studioState.domains).reduce((sum, value) => sum + value, 0) * 12 + studioState.signals);
+  const confidence = Math.min(92, 54 + chosen.length * 8 + Math.min(20, studioState.signals));
+  document.querySelector('#studioCompleteness').textContent = `${total}%`;
+  document.querySelector('#studioBar').style.width = `${total}%`;
+  document.querySelector('#studioSignals').textContent = studioState.signals;
+  document.querySelector('#studioConfidence').textContent = `${confidence}% mapping confidence`;
+  document.querySelector('#studioTwinTitle').textContent = total > 70 ? 'Context model forming' : 'Context received';
+  document.querySelector('#studioReady').textContent = total > 70 ? 'MODEL READY' : 'MAPPING LIVE';
+  document.querySelector('#studioReady').classList.add('ready');
+  document.querySelector('#brainScore').textContent = `${Math.min(99, 45 + studioState.domains.mind * 12)}%`;
+  document.querySelector('#heartScore').textContent = `${Math.min(99, 45 + studioState.domains.body * 12)}%`;
+  document.querySelector('#gutScore').textContent = `${Math.min(99, 45 + studioState.domains.rhythm * 12)}%`;
+  document.querySelectorAll('[data-studio-domain]').forEach((card) => { const domain = card.dataset.studioDomain; const count = studioState.domains[domain]; card.classList.toggle('mapped', count > 0); card.querySelector('b').textContent = count ? `${count} evidence ${count === 1 ? 'thread' : 'threads'}` : 'Unmapped'; });
+  const names = chosen.map((rule) => rule.label.toLowerCase()).join(' + ');
+  document.querySelector('#studioRecommendation').textContent = `Mapped ${names}. Next: corroborate this self-reported pattern with timestamps, source quality and a qualified human review before making any health decision.`;
+  return `I mapped this to ${names}. I found ${studioState.signals} structured signal${studioState.signals === 1 ? '' : 's'} so far. The twin updated, but this is an illustrative representation—not a diagnosis. What context would help confirm or challenge this pattern?`;
+}
+studioForm?.addEventListener('submit', (event) => { event.preventDefault(); const value = studioInput.value.trim(); if (!value) return; studioInput.value = ''; studioMessage(value, 'user'); window.setTimeout(() => studioMessage(mapStudioText(value)), 180); });
+document.querySelectorAll('[data-studio-prompt]').forEach((button) => button.addEventListener('click', () => { studioInput.value = button.dataset.studioPrompt; studioInput.focus(); }));
+document.querySelector('#studioReset')?.addEventListener('click', () => { studioState.signals = 0; Object.keys(studioState.domains).forEach((key) => { studioState.domains[key] = 0; }); studioMessages.innerHTML = ''; document.querySelector('#studioCompleteness').textContent = '0%'; document.querySelector('#studioBar').style.width = '0%'; document.querySelector('#studioSignals').textContent = '0'; document.querySelector('#studioConfidence').textContent = 'confidence pending'; document.querySelector('#studioTwinTitle').textContent = 'Awaiting context'; document.querySelector('#studioReady').textContent = 'EMPTY MODEL'; document.querySelector('#studioReady').classList.remove('ready'); document.querySelectorAll('[data-studio-domain]').forEach((card) => { card.classList.remove('mapped'); card.querySelector('b').textContent = 'Unmapped'; }); studioMessage('The local twin was reset. Nothing was saved. Tell me a signal whenever you are ready.'); });
