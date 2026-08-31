@@ -110,3 +110,28 @@ document.querySelectorAll('.audience-tab').forEach((tab) => {
   });
 });
 
+const signalMap = {
+  history: {title:'Clinical history → longitudinal layer', description:'Prior records and reported history are organised as time-aware evidence, preserving provenance rather than collapsing everything into one score.', layer:'history', confidence:'82%', summary:'Longitudinal evidence is being structured.'},
+  voice: {title:'Voice → current-state layer', description:'Voice is treated as one contextual signal among many. The map shows how it can inform an observed-state representation with explicit uncertainty.', layer:'state', confidence:'71%', summary:'A current-state signal has been added.'},
+  movement: {title:'Movement → current-state layer', description:'Movement observations can contribute to a temporal pattern while remaining separate from interpretation until reviewed.', layer:'state', confidence:'76%', summary:'Temporal movement evidence is connected.'},
+  context: {title:'Context → life-context layer', description:'Environment and circumstances help explain why a pattern may appear, reducing the risk of reading a signal without its context.', layer:'context', confidence:'88%', summary:'Contextual factors are now represented.'},
+  goals: {title:'Goals → intent layer', description:'The person’s priorities and preferences shape which recommendations are relevant, actionable and acceptable to them.', layer:'intent', confidence:'91%', summary:'Personal priorities are informing relevance.'},
+  routine: {title:'Routine → life-context layer', description:'Daily rhythm links repeated observations to a person’s lived context and helps the twin focus on practical, reversible next steps.', layer:'context', confidence:'79%', summary:'Routine patterns are connected to context.'}
+};
+document.querySelectorAll('.input-node').forEach((node) => {
+  const activate = () => {
+    const data = signalMap[node.dataset.signal];
+    document.querySelectorAll('.input-node').forEach((item) => item.classList.remove('selected'));
+    node.classList.add('selected');
+    document.querySelector('#mappingTitle').textContent = data.title;
+    document.querySelector('#mappingDescription').textContent = data.description;
+    document.querySelector('#patientTwinSummary').textContent = data.summary;
+    document.querySelector('#patientSignals').textContent = '1';
+    document.querySelector('#patientConfidence').textContent = data.confidence;
+    document.querySelector('#patientLayers').textContent = '1/6';
+    document.querySelectorAll('.layer-item').forEach((item) => { const active = item.dataset.layer === data.layer; item.classList.toggle('mapped', active); if (active) item.querySelector('b').textContent = '✓'; });
+  };
+  node.addEventListener('click', activate);
+  node.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(); } });
+});
+
