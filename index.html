@@ -13,14 +13,16 @@
   <link rel="stylesheet" href="pricing-hover.css?v=1" />
   <link rel="stylesheet" href="neural-map.css?v=1" />
   <link rel="stylesheet" href="clinical-report.css?v=1" />
+  <link rel="stylesheet" href="twin-studio.css?v=1" />
+  <link rel="stylesheet" href="original-twin.css?v=1" />
 </head>
 <body>
   <aside class="app-sidebar" aria-label="Metria workspace navigation">
-    <a class="sidebar-brand" href="#top"><span class="brand-mark">M</span><span>metria</span></a>
+    <a class="sidebar-brand" href="#top"><span class="brand-mark">M</span><span>metria</span></a><button class="sidebar-toggle sidebar-toggle-top" type="button" aria-label="Collapse sidebar">‹</button>
     <div class="sidebar-group">
       <span class="sidebar-label">Workspace</span>
       <a class="sidebar-link active" href="#top"><span class="sidebar-icon">◉</span>Explore</a>
-      <a class="sidebar-link" href="#twin-demo"><span class="sidebar-icon">✦</span>Assistant</a>
+      <a class="sidebar-link" href="#original-twin"><span class="sidebar-icon">✦</span>Assistant</a>
       <a class="sidebar-link" href="#about"><span class="sidebar-icon">▱</span>My Library</a>
       <a class="sidebar-link" href="#approach"><span class="sidebar-icon">♧</span>Researchers</a>
       <a class="sidebar-link" href="#contact"><span class="sidebar-icon">⚙</span>Settings</a>
@@ -31,12 +33,11 @@
       <a class="sidebar-link" href="#approach"><span class="sidebar-icon">▣</span>Our principles</a>
       <a class="sidebar-link" href="mailto:hello@metria.ai?subject=Feedback%20for%20Metria"><span class="sidebar-icon">◌</span>Send feedback</a>
       <div class="sidebar-social"><span>in</span><span>▶</span><span>◎</span></div>
-      <button class="sidebar-toggle" type="button" aria-label="Collapse sidebar">← Collapse</button>
     </div>
   </aside>
   <div class="site-glow glow-one"></div>
   <div class="site-glow glow-two"></div>
-
+    <section id="original-twin" class="original-twin-section reveal"><div class="container"><div class="original-heading"><div><div class="eyebrow"><span class="pulse"></span> Research prototype</div><h2>Human context,<br /><em>made inspectable.</em></h2></div><p>Metria’s original patient-twin research direction now lives in the self-contained Twin Studio below. It is designed for synthetic demonstrations and human-led review.</p></div><div class="original-note"><span>⌁</span><p>Inspired by Metria research concepts: longitudinal evidence, organ-aware state, behavioural context and auditable recommendations. No external app is embedded and no personal data is stored.</p></div></div></section>
   <header class="nav-wrap">
     <nav class="nav container">
       <a class="brand" href="#top" aria-label="Metria home"><span class="brand-mark">M</span><span>metria</span></a>
@@ -95,6 +96,32 @@
       </div>
     </section>
 
+    <section id="original-twin" class="original-twin-section reveal">
+      <div class="container"><div class="original-heading"><div><div class="eyebrow"><span class="pulse"></span> The original Metria prototype</div><h2>Meet the <em>patient twin.</em></h2></div><p>This is the live LLM-guided clinical avatar prototype. Explore the original 3-D patient representation and interact with its AI assistant directly inside Metria.</p></div><div class="original-app-shell"><div class="original-app-top"><span>METRIA / LIVE PATIENT DIGITAL TWIN</span><a href="https://filo-cena-patient-digital-twin.hf.space" target="_blank" rel="noopener">Open full app ↗</a></div><iframe src="https://filo-cena-patient-digital-twin.hf.space" title="Metria Patient Digital Twin prototype" loading="lazy" allow="fullscreen"></iframe></div><div class="original-note"><span>⌁</span><p>Prototype demonstration hosted by Metria’s research environment. Do not upload identifiable patient data. Clinical use requires validation, governance and professional oversight.</p></div></div>
+    </section>
+
+    <section id="twin-studio" class="twin-studio-section reveal">
+      <div class="container">
+        <div class="studio-heading"><div><div class="eyebrow"><span class="pulse"></span> Metria Twin Studio · local prototype</div><h2>A human twin you can<br /><em>question and inspect.</em></h2></div><p>Write naturally about a person’s routines, symptoms, history or goals. The browser maps the words into transparent domains, shows what changed, and keeps uncertainty visible.</p></div>
+        <div class="studio-grid">
+          <section class="studio-chat" aria-label="Twin Studio chat">
+            <div class="studio-chat-top"><div><span class="studio-status"></span><strong>Context Mapper</strong><small>Free local semantic demo · no data leaves this page</small></div><button id="studioReset" type="button">Reset</button></div>
+            <div class="studio-messages" id="studioMessages"><div class="studio-message assistant"><span class="studio-avatar">M</span><p>Tell me something about the person you want to model — for example, “sleep has been irregular and energy drops after lunch”. I’ll map the evidence and explain the next step.</p></div></div>
+            <div class="studio-suggestions"><button type="button" data-studio-prompt="Sleep has been irregular, I sit most of the day, and I want more energy.">Try a realistic example</button><button type="button" data-studio-prompt="My mood is variable, work is stressful, and I want a calmer routine.">Map stress + routine</button></div>
+            <form class="studio-composer" id="studioForm"><textarea id="studioInput" rows="2" placeholder="Describe a signal in your own words…" aria-label="Describe a patient signal"></textarea><button type="submit" aria-label="Map signal">Map <span>↗</span></button></form>
+            <p class="studio-disclaimer">Synthetic demonstration only. Do not enter names, identifiers, diagnoses or urgent medical information.</p>
+          </section>
+          <section class="studio-twin" aria-label="Interactive human digital twin">
+            <div class="studio-twin-top"><div><span class="panel-kicker">PATIENT TWIN / 001</span><h3 id="studioTwinTitle">Awaiting context</h3></div><span class="studio-ready" id="studioReady">EMPTY MODEL</span></div>
+            <div class="body-stage"><div class="body-halo"></div><svg class="human-twin" viewBox="0 0 220 360" role="img" aria-label="Human digital twin"><circle cx="110" cy="51" r="34"/><path d="M73 139c4-28 18-43 37-43s33 15 37 43l20 76-30-12-9 126H92l-9-126-30 12 20-76Z"/><path d="M91 157 63 260M129 157l28 103"/><path class="signal-heart" d="M110 145c-10-10-24 7 0 24 24-17 10-34 0-24Z"/><circle class="signal-brain" cx="110" cy="45" r="12"/><circle class="signal-gut" cx="110" cy="205" r="13"/></svg><span class="body-label label-brain">Cognition <b id="brainScore">—</b></span><span class="body-label label-heart">State <b id="heartScore">—</b></span><span class="body-label label-gut">Rhythm <b id="gutScore">—</b></span></div>
+            <div class="studio-health"><div><span>Model completeness</span><b id="studioCompleteness">0%</b></div><div class="studio-bar"><i id="studioBar"></i></div><small><span id="studioSignals">0</span> mapped signals · <span id="studioConfidence">confidence pending</span></small></div>
+            <div class="studio-domain-grid"><div data-studio-domain="mind"><span>Mind & mood</span><b>Unmapped</b></div><div data-studio-domain="body"><span>Body & movement</span><b>Unmapped</b></div><div data-studio-domain="rhythm"><span>Sleep & rhythm</span><b>Unmapped</b></div><div data-studio-domain="context"><span>Life context</span><b>Unmapped</b></div></div>
+            <div class="studio-recommendation"><span>✦</span><div><small>TRACEABLE NEXT STEP</small><p id="studioRecommendation">Add a free-form observation to see the twin update and receive a bounded, non-clinical recommendation.</p></div></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
     <section id="mapping" class="mapping-section reveal">
       <div class="container">
         <div class="mapping-heading"><div><div class="eyebrow"><span class="pulse"></span> How the twin learns</div><h2>From patient data<br />to a <em>living model.</em></h2></div><p>Metria maps heterogeneous evidence into an interpretable patient representation. Select a signal below to see how it updates the twin and influences the next layer of reasoning.</p></div>
@@ -146,4 +173,3 @@
   <script src="script.js?v=6"></script>
 </body>
 </html>
-
