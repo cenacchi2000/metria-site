@@ -28,3 +28,16 @@
 .app-sidebar.collapsed>.sidebar-toggle.sidebar-toggle-top::after{content:'→';font-size:18px;line-height:1;transform:translateX(1px)}
 .app-sidebar.collapsed>.sidebar-toggle.sidebar-toggle-top:hover{background:#ffaaa5!important;color:#2a1c1f!important;border-color:#ffaaa5!important}
 .app-sidebar.collapsed>.sidebar-toggle.sidebar-toggle-top:focus-visible{outline:2px solid #b9f36c!important;outline-offset:3px!important}
+
+/* Keep the page inside the space left by the fixed rail. */
+html,body{width:100%;max-width:100%;overflow-x:hidden}
+.nav-wrap,main,.footer{box-sizing:border-box;max-width:100vw;overflow-x:clip}
+.app-sidebar:not(.collapsed)~.nav-wrap,.app-sidebar:not(.collapsed)~main,.app-sidebar:not(.collapsed)~.footer{width:calc(100% - 238px)}
+.app-sidebar.collapsed~.nav-wrap,.app-sidebar.collapsed~main,.app-sidebar.collapsed~.footer{width:calc(100% - 88px)}
+.hero{grid-template-columns:minmax(0,48%) minmax(0,52%)}
+.hero-copy,.hero-visual{min-width:0}
+.hero-visual{overflow:clip}
+.orbit-a{max-width:100%;}
+.orbit-b{max-width:100%;}
+.nav{min-width:0}
+@media(max-width:760px){.app-sidebar~.nav-wrap,.app-sidebar~main,.app-sidebar~.footer{width:100%}.hero-visual{overflow:visible}.hero{grid-template-columns:1fr}}
