@@ -70,6 +70,28 @@
 
     <section class="signal-strip"><div class="container strip-inner"><span>BUILDING THE NEXT LAYER OF HEALTHCARE INTELLIGENCE</span><span>CLINICAL CONTEXT</span><span>RELIABLE EVIDENCE</span><span>HUMAN JUDGEMENT</span></div></section>
 
+    <section id="twin-demo" class="twin-demo-section reveal">
+      <div class="container">
+        <div class="demo-heading"><div><div class="eyebrow"><span class="pulse"></span> Try the evidence twin</div><h2>See a person’s<br /><em>context come alive.</em></h2></div><p>Answer a few guided questions and watch a private, explainable profile take shape. This interactive showcase demonstrates the Metria experience using 100 structured signals.</p></div>
+        <div class="twin-workspace">
+          <div class="twin-chat">
+            <div class="chat-header"><div class="chat-agent"><span class="agent-orb">✦</span><div><strong>Metria Assistant</strong><small>Evidence Twin intake · local demo</small></div></div><span class="secure-pill">⌁ Private demo</span></div>
+            <div class="chat-messages" id="chatMessages"><div class="chat-message assistant"><span class="message-avatar">M</span><div><p>Welcome. I’ll ask 10 short questions across 10 areas of your context. You can answer naturally, choose an option, or skip anything you prefer not to share.</p><span class="message-time">Ready when you are</span></div></div></div>
+            <div class="quick-replies" id="quickReplies"><button type="button" data-answer="Start the guided intake">Start guided intake <span>↗</span></button><button type="button" data-answer="Show me an example twin">Show an example <span>◈</span></button></div>
+            <form class="chat-composer" id="chatForm"><input id="chatInput" autocomplete="off" placeholder="Tell Metria about yourself…" aria-label="Message Metria Assistant" /><button type="submit" aria-label="Send message">↑</button></form>
+            <div class="demo-disclaimer">Demo only · not medical advice · do not enter identifying or urgent health information.</div>
+          </div>
+          <div class="twin-panel">
+            <div class="twin-panel-top"><div><span class="panel-kicker">YOUR EVIDENCE TWIN</span><h3 id="twinName">A living context model</h3></div><span class="twin-status"><i></i><span id="twinStatus">Awaiting input</span></span></div>
+            <div class="twin-visual"><div class="twin-sphere"><div class="sphere-core">M</div><span class="sphere-dot dot-1"></span><span class="sphere-dot dot-2"></span><span class="sphere-dot dot-3"></span><span class="sphere-dot dot-4"></span></div><div class="twin-ring ring-1"></div><div class="twin-ring ring-2"></div></div>
+            <div class="twin-progress"><div><span>Profile completeness</span><strong id="progressValue">0%</strong></div><div class="progress-track"><span id="progressBar"></span></div><small><span id="answeredCount">0</span> of 100 signals mapped</small></div>
+            <div class="twin-domains" id="twinDomains"><div><span>Physical context</span><b>—</b></div><div><span>Daily rhythm</span><b>—</b></div><div><span>Environment</span><b>—</b></div><div><span>Goals & preferences</span><b>—</b></div></div>
+            <div class="recommendation-box" id="recommendationBox"><span class="rec-icon">✦</span><div><small>Emerging insight</small><p>Complete the guided intake to generate an explainable, non-clinical summary.</p></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="platform" class="section container reveal">
       <div class="section-intro"><div><div class="eyebrow">The Metria platform</div><h2>From scattered data<br />to <em>shared understanding.</em></h2></div><p>Modern healthcare produces more information than any one person can reasonably hold. Metria helps organise it around the decisions that matter.</p></div>
       <div class="feature-grid">
