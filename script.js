@@ -229,9 +229,61 @@ let faceLandmarker;
 let faceFrame;
 let faceRecorder;
 let faceMeshMode = 'fallback';
+let faceGL;
+let faceGLProgram;
+let faceGLPositionBuffer;
+let faceGLColorBuffer;
+let faceGLLineBuffer;
+let faceGLPositionLocation;
+let faceGLColorLocation;
+let faceGLPointSizeLocation;
+let faceGLRotationLocation;
+let faceGLReady = false;
+
+function initFaceGL() {
+  if (!faceCanvas || faceGLReady) return faceGLReady;
+  faceGL = faceCanvas.getContext('webgl', {alpha: true, antialias: true, premultipliedAlpha: false});
+  if (!faceGL) return false;
+  const vertexSource = `attribute vec3 aPosition; attribute vec3 aColor; uniform float uPointSize; uniform float uRotation; varying vec3 vColor; void main(){ float c=cos(uRotation),s=sin(uRotation); vec3 p=vec3(c*aPosition.x-s*aPosition.z,aPosition.y,s*aPosition.x+c*aPosition.z); gl_Position=vec4(p.xy,p.z*.18,1.0); gl_PointSize=uPointSize*(1.0-p.z*.15); vColor=aColor; }`;
+  const fragmentSource = `precision mediump float; varying vec3 vColor; void main(){ vec2 p=gl_PointCoord-.5; float edge=smoothstep(.5,.22,length(p)); if(edge<.02) discard; gl_FragColor=vec4(vColor,edge); }`;
+  const compile = (type, source) => { const shader=faceGL.createShader(type); faceGL.shaderSource(shader,source); faceGL.compileShader(shader); return faceGL.getShaderParameter(shader,faceGL.COMPILE_STATUS) ? shader : null; };
+  const vertexShader=compile(faceGL.VERTEX_SHADER,vertexSource); const fragmentShader=compile(faceGL.FRAGMENT_SHADER,fragmentSource);
+  if (!vertexShader || !fragmentShader) return false;
+  faceGLProgram=faceGL.createProgram(); faceGL.attachShader(faceGLProgram,vertexShader); faceGL.attachShader(faceGLProgram,fragmentShader); faceGL.linkProgram(faceGLProgram);
+  if (!faceGL.getProgramParameter(faceGLProgram,faceGL.LINK_STATUS)) return false;
+  faceGLPositionBuffer=faceGL.createBuffer(); faceGLColorBuffer=faceGL.createBuffer(); faceGLLineBuffer=faceGL.createBuffer();
+  faceGLPositionLocation=faceGL.getAttribLocation(faceGLProgram,'aPosition'); faceGLColorLocation=faceGL.getAttribLocation(faceGLProgram,'aColor'); faceGLPointSizeLocation=faceGL.getUniformLocation(faceGLProgram,'uPointSize'); faceGLRotationLocation=faceGL.getUniformLocation(faceGLProgram,'uRotation');
+  faceGL.enable(faceGL.BLEND); faceGL.blendFunc(faceGL.SRC_ALPHA,faceGL.ONE_MINUS_SRC_ALPHA); faceGLReady=true; return true;
+}
+
+function resizeFaceGL() {
+  if (!faceGL || !faceCanvas) return;
+  const width=faceCanvas.clientWidth||320, height=faceCanvas.clientHeight||220, ratio=Math.min(window.devicePixelRatio||1,2);
+  if (faceCanvas.width!==width*ratio || faceCanvas.height!==height*ratio) { faceCanvas.width=width*ratio; faceCanvas.height=height*ratio; }
+  faceGL.viewport(0,0,faceCanvas.width,faceCanvas.height);
+}
+
+function render3DFace(points, fallback=false) {
+  if (!initFaceGL()) return false;
+  resizeFaceGL();
+  const positions=[], colors=[], links=[];
+  const source=points?.length ? points : Array.from({length:180},(_,i)=>{ const t=i/179*Math.PI*2; const ring=Math.floor(i/30), a=i%30/30*Math.PI*2; return {x:.5+Math.cos(a)*(.13+ring*.012),y:.5+(ring-3)*.055+Math.sin(a)*(.025+ring*.008),z:-.08+Math.cos(a)*.11}; });
+  source.forEach((p,i)=>{ const z=Math.max(-.28,Math.min(.28,p.z||0)); positions.push((p.x-.5)*2.05,-(p.y-.5)*2.12,z*2.5); const depth=Math.max(0,Math.min(1,.5-z)); colors.push(.98-.15*depth,.53+.24*(1-depth),.56+.17*(1-depth)); if(i>0) links.push((i-1)*3,i*3); });
+  const selected=[10,21,54,67,103,127,132,145,152,172,176,234,263,323,356,361,365,378,397,454];
+  for(let i=1;i<selected.length;i++){ const a=selected[i-1],b=selected[i]; if(a<source.length&&b<source.length) links.push(a*3,b*3); }
+  faceGL.clearColor(0,0,0,0); faceGL.clear(faceGL.COLOR_BUFFER_BIT|faceGL.DEPTH_BUFFER_BIT); faceGL.useProgram(faceGLProgram);
+  faceGL.bindBuffer(faceGL.ARRAY_BUFFER,faceGLPositionBuffer); faceGL.bufferData(faceGL.ARRAY_BUFFER,new Float32Array(positions),faceGL.DYNAMIC_DRAW); faceGL.enableVertexAttribArray(faceGLPositionLocation); faceGL.vertexAttribPointer(faceGLPositionLocation,3,faceGL.FLOAT,false,0,0);
+  faceGL.bindBuffer(faceGL.ARRAY_BUFFER,faceGLColorBuffer); faceGL.bufferData(faceGL.ARRAY_BUFFER,new Float32Array(colors),faceGL.DYNAMIC_DRAW); faceGL.enableVertexAttribArray(faceGLColorLocation); faceGL.vertexAttribPointer(faceGLColorLocation,3,faceGL.FLOAT,false,0,0);
+  faceGL.uniform1f(faceGLPointSizeLocation, Math.max(3,Math.min(7,(faceCanvas.clientWidth||320)/95))); faceGL.uniform1f(faceGLRotationLocation, fallback ? Math.sin(performance.now()*.0005)*.08 : 0);
+  faceGL.drawArrays(faceGL.POINTS,0,source.length);
+  const linePositions=[]; links.forEach((index)=>linePositions.push(...positions.slice(index,index+3)));
+  faceGL.bindBuffer(faceGL.ARRAY_BUFFER,faceGLLineBuffer); faceGL.bufferData(faceGL.ARRAY_BUFFER,new Float32Array(linePositions),faceGL.DYNAMIC_DRAW); faceGL.vertexAttribPointer(faceGLPositionLocation,3,faceGL.FLOAT,false,0,0); faceGL.disableVertexAttribArray(faceGLColorLocation); faceGL.vertexAttrib3f(faceGLColorLocation,.72,.95,.42); faceGL.drawArrays(faceGL.LINES,0,links.length); faceGL.enableVertexAttribArray(faceGLColorLocation);
+  return true;
+}
 
 function drawFaceMesh(landmarks) {
   if (!faceCanvas || !faceVideo) return;
+  if (render3DFace(landmarks, false)) return;
   const width = faceCanvas.clientWidth || 320;
   const height = faceCanvas.clientHeight || 220;
   const ratio = window.devicePixelRatio || 1;
@@ -298,6 +350,7 @@ function trackFace() {
 
 function drawFallbackFace() {
   if (!faceCanvas) return;
+  if (render3DFace(null, true)) return;
   const width = faceCanvas.clientWidth || 320; const height = faceCanvas.clientHeight || 220; const ratio = window.devicePixelRatio || 1;
   if (faceCanvas.width !== width * ratio || faceCanvas.height !== height * ratio) { faceCanvas.width = width * ratio; faceCanvas.height = height * ratio; }
   const ctx = faceCanvas.getContext('2d'); ctx.setTransform(ratio,0,0,ratio,0,0); ctx.clearRect(0,0,width,height);
