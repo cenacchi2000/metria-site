@@ -76,10 +76,56 @@ if(installButton)installButton.onclick=async()=>{
 };
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 let recognition=null;if("SpeechRecognition"in window||"webkitSpeechRecognition"in window){const R=window.SpeechRecognition||window.webkitSpeechRecognition;recognition=new R();recognition.lang="en-AU";recognition.interimResults=false;recognition.onresult=e=>{$("#chatInput").value=e.results[0][0].transcript};recognition.onend=()=>$("#speech").textContent="Start speech input";}$("#speech").onclick=()=>{if(!recognition){$("#speech").textContent="Speech input unavailable";return}$("#speech").textContent="Listening…";recognition.start()};
-let stream=null,landmarker=null;const video=$("#video"),canvas=$("#mesh"),box=$("#videoBox");
-const draw=pts=>{const r=Math.min(devicePixelRatio||1,2),w=canvas.clientWidth,h=canvas.clientHeight;canvas.width=w*r;canvas.height=h*r;const c=canvas.getContext("2d");c.setTransform(r,0,0,r,0,0);c.clearRect(0,0,w,h);if(!pts)return;const minX=Math.min(...pts.map(p=>p.x)),maxX=Math.max(...pts.map(p=>p.x)),minY=Math.min(...pts.map(p=>p.y)),maxY=Math.max(...pts.map(p=>p.y)),s=Math.min(w/(maxX-minX+.12),h/(maxY-minY+.12)),cx=(minX+maxX)/2,cy=(minY+maxY)/2,p=pts.map(x=>({x:w/2+(x.x-cx)*s,y:h/2+(x.y-cy)*s,z:x.z||0}));c.strokeStyle="rgba(185,243,108,.55)";c.lineWidth=1;for(let i=0;i<p.length;i+=5){for(let j=i+5;j<p.length;j+=5){const dx=p[i].x-p[j].x,dy=p[i].y-p[j].y;if(dx*dx+dy*dy<Math.pow(Math.min(w,h)*.1,2)){c.beginPath();c.moveTo(p[i].x,p[i].y);c.lineTo(p[j].x,p[j].y);c.stroke()}}}p.forEach((x,i)=>{c.fillStyle=i%9?"#b9f36c":"#ffaaa5";c.beginPath();c.arc(x.x,x.y,1.2,0,7);c.fill()})};
-const loop=()=>{if(!stream)return;if(landmarker&&video.readyState>=2){const out=landmarker.detectForVideo(video,performance.now());draw(out.faceLandmarks?.[0])}requestAnimationFrame(loop)};
-$("#camera").onclick=async()=>{if(stream)return;try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:640},height:{ideal:480}},audio:false});video.srcObject=stream;video.classList.add("active");$("#videoLabel").textContent="Camera active · local landmark mesh";$("#camera").disabled=true;$("#cameraStop").disabled=false;const v=await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs"),f=await v.FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm");landmarker=await v.FaceLandmarker.createFromOptions(f,{baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",delegate:"GPU"},runningMode:"VIDEO",numFaces:1});state.face++;save();analysis();loop()}catch(e){stream?.getTracks().forEach(t=>t.stop());stream=null;$("#videoLabel").textContent="Camera unavailable · check site permission"}};
+let stream=null,landmarker=null,lastTime=-1;
+const video=$("#video"),canvas=$("#mesh"),box=$("#videoBox");
+const drawFallback=()=>{
+ const ratio=Math.min(devicePixelRatio||1,2),w=canvas.clientWidth||320,h=canvas.clientHeight||240;
+ canvas.width=w*ratio;canvas.height=h*ratio;const c=canvas.getContext("2d");c.setTransform(ratio,0,0,ratio,0,0);c.clearRect(0,0,w,h);
+ const cx=w/2,cy=h/2,rx=Math.min(w*.29,130),ry=Math.min(h*.39,150),phase=performance.now()/900;
+ c.strokeStyle="rgba(185,243,108,.68)";c.lineWidth=1.1;c.shadowColor="#8273df";c.shadowBlur=7;c.beginPath();c.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);c.stroke();c.shadowBlur=0;
+ for(let ring=0;ring<5;ring++){for(let i=0;i<18;i++){const a=i/18*Math.PI*2+phase*.08*(ring%2?1:-1),x=cx+Math.cos(a)*(rx*(.25+ring*.17)),y=cy+Math.sin(a)*(ry*(.25+ring*.17));c.fillStyle=i%5?"#b9f36c":"#ffaaa5";c.beginPath();c.arc(x,y,1.7,0,7);c.fill()}}
+ c.strokeStyle="rgba(255,170,165,.6)";[[cx-rx*.42,cy-ry*.18,cx-rx*.1,cy-ry*.18],[cx+rx*.1,cy-ry*.18,cx+rx*.42,cy-ry*.18],[cx,cy-ry*.08,cx,cy+ry*.2],[cx-rx*.3,cy+ry*.4,cx+rx*.3,cy+ry*.4]].forEach(a=>{c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(a[2],a[3]);c.stroke()});
+};
+const draw=pts=>{
+ if(!pts?.length){drawFallback();return}
+ const ratio=Math.min(devicePixelRatio||1,2),w=canvas.clientWidth||320,h=canvas.clientHeight||240;
+ canvas.width=w*ratio;canvas.height=h*ratio;const c=canvas.getContext("2d");c.setTransform(ratio,0,0,ratio,0,0);c.clearRect(0,0,w,h);
+ const minX=Math.min(...pts.map(p=>p.x)),maxX=Math.max(...pts.map(p=>p.x)),minY=Math.min(...pts.map(p=>p.y)),maxY=Math.max(...pts.map(p=>p.y)),s=Math.min(w/(maxX-minX+.12),h/(maxY-minY+.12)),cx=(minX+maxX)/2,cy=(minY+maxY)/2,p=pts.map(x=>({x:w/2+(x.x-cx)*s,y:h/2+(x.y-cy)*s,z:x.z||0}));
+ c.strokeStyle="rgba(185,243,108,.58)";c.lineWidth=Math.max(.5,w/500);
+ for(let i=0;i<p.length;i+=4)for(let j=i+4;j<p.length;j+=4){const dx=p[i].x-p[j].x,dy=p[i].y-p[j].y;if(dx*dx+dy*dy<Math.pow(Math.min(w,h)*.09,2)){c.beginPath();c.moveTo(p[i].x,p[i].y);c.lineTo(p[j].x,p[j].y);c.stroke()}}
+ p.forEach((x,i)=>{c.fillStyle=i%11?"#b9f36c":"#ffaaa5";c.shadowColor=c.fillStyle;c.shadowBlur=i%11?3:7;c.beginPath();c.arc(x.x,x.y,i%11?1:1.7,0,7);c.fill()});c.shadowBlur=0;
+};
+const loop=()=>{
+ if(!stream)return;
+ if(video.readyState>=2&&video.currentTime!==lastTime){
+  lastTime=video.currentTime;
+  if(landmarker){try{const out=landmarker.detectForVideo(video,performance.now());draw(out.faceLandmarks?.[0]);$("#videoLabel").textContent=out.faceLandmarks?.[0]?"Camera active · 478-point local mesh":"Camera active · looking for a face"}catch(e){drawFallback();$("#videoLabel").textContent="Camera active · local mesh renderer"}}else{drawFallback();$("#videoLabel").textContent="Camera active · preparing local mesh"}
+ }
+ requestAnimationFrame(loop);
+};
+const loadLandmarker=async()=>{
+ const v=await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs");
+ const f=await v.FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm");
+ const options={runningMode:"VIDEO",numFaces:1,outputFaceBlendshapes:false,outputFacialTransformationMatrixes:true};
+ try{return await v.FaceLandmarker.createFromOptions(f,{baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",delegate:"GPU"},...options})}
+ catch(gpuError){return await v.FaceLandmarker.createFromOptions(f,{baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",delegate:"CPU"},...options})}
+};
+$("#camera").onclick=async()=>{
+ if(stream)return;
+ if(!navigator.mediaDevices?.getUserMedia){$("#videoLabel").textContent="Camera unavailable · use HTTPS and enable camera access";return}
+ $("#camera").disabled=true;$("#videoLabel").textContent="Requesting camera access…";
+ try{
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"user"},width:{ideal:640},height:{ideal:480}},audio:false})}
+  catch(firstError){stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false})}
+  video.srcObject=stream;video.classList.add("active");await video.play();$("#cameraStop").disabled=false;state.face++;save();analysis();loop();
+  $("#videoLabel").textContent="Camera active · preparing local mesh";
+  try{landmarker=await loadLandmarker();$("#videoLabel").textContent="Camera active · 478-point local mesh ready"}catch(modelError){landmarker=null;$("#videoLabel").textContent="Camera active · visual mesh renderer ready"}
+ }catch(e){stream?.getTracks().forEach(t=>t.stop());stream=null;$("#camera").disabled=false;$("#videoLabel").textContent=e?.name==="NotAllowedError"?"Camera blocked · enable it in iPhone settings":"Camera unavailable · try closing other camera apps"}
+};
+$("#cameraStop").onclick=()=>{
+ stream?.getTracks().forEach(t=>t.stop());stream=null;landmarker=null;video.srcObject=null;video.classList.remove("active");$("#camera").disabled=false;$("#cameraStop").disabled=true;$("#videoLabel").textContent="Camera off · nothing is captured until you opt in";canvas.getContext("2d")?.clearRect(0,0,canvas.width,canvas.height)
+};
+analysis();loop()}catch(e){stream?.getTracks().forEach(t=>t.stop());stream=null;$("#videoLabel").textContent="Camera unavailable · check site permission"}};
 $("#cameraStop").onclick=()=>{stream?.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;video.classList.remove("active");$("#camera").disabled=false;$("#cameraStop").disabled=true;$("#videoLabel").textContent="Camera off · nothing is captured until you opt in";const c=canvas.getContext("2d");c.clearRect(0,0,canvas.width,canvas.height)};
 analysis();
 })();
