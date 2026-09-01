@@ -1,8 +1,11 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
-const STORAGE_KEY="metriaTwinState";
-const state=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"answers":[],"days":[],"speech":[],"face":0}');
-const save=()=>localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+const TWIN_KEY="metriaTwinState",AVATAR_KEY="metriaAvatarProfile",REMINDER_KEY="metriaReminderSettings";
+const readTwin=()=>JSON.parse(localStorage.getItem(TWIN_KEY)||'{"answers":[],"days":[],"speech":[],"face":0}');
+let avatarProfile=JSON.parse(localStorage.getItem(AVATAR_KEY)||"null");
+let reminders=JSON.parse(localStorage.getItem(REMINDER_KEY)||'{"enabled":false,"time":"09:00","lastSent":null}');
+const saveAvatar=()=>localStorage.setItem(AVATAR_KEY,JSON.stringify(avatarProfile));
+const saveReminders=()=>localStorage.setItem(REMINDER_KEY,JSON.stringify(reminders));
 const canvas=document.querySelector("#avatar3d");
 const avatarStatus=document.querySelector("#avatarStatus");
 const avatarProgress=document.querySelector("#avatarProgress");
@@ -52,7 +55,7 @@ function mesh(geometry,mat,position=[0,0,0],scale=[1,1,1]){
 }
 function renderAvatar(profile){
   if(!canvas)return;
-  if(renderer){renderer.dispose();canvas.replaceWith(canvas.cloneNode(true));location.reload();return}
+  if(renderer)return
   scene=new THREE.Scene();
   camera=new THREE.PerspectiveCamera(34,1,.1,100);camera.position.set(0,.05,5.3);
   renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:"high-performance"});
@@ -91,31 +94,31 @@ function renderAvatar(profile){
   canvas.closest(".avatar-stage")?.classList.add("ready");
 }
 window.addEventListener("metria:face-landmarks",event=>{
-  if(state.avatar||frames.length>=36)return;
+  if(avatarProfile||frames.length>=36)return;
   const landmarks=event.detail;if(!landmarks?.length)return;
   frames.push(landmarks.map(p=>[p.x,p.y,p.z||0]));
   const pct=Math.round(frames.length/36*100);
   avatarStatus.textContent="Building your 3D twin · "+pct+"%";
   avatarProgress.textContent="Keep your face centred and turn slightly left and right";
   if(frames.length===36){
-    state.avatar=profileFrom(averageFrames());save();renderAvatar(state.avatar);
+    avatarProfile=profileFrom(averageFrames());saveAvatar();renderAvatar(avatarProfile);
     document.querySelector("#videoLabel").textContent="3D twin generated locally · camera may be stopped";
   }
 });
-if(state.avatar)renderAvatar(state.avatar);
+if(avatarProfile)renderAvatar(avatarProfile);
 
 function dailyCopy(){
-  const answers=(state.answers||[]).slice(-7);
+  const answers=(readTwin().answers||[]).slice(-7);
   if(!answers.length)return{title:"Your Metria check-in is ready",body:"Add a 60-second signal for sleep, energy, mood and routine."};
   const domains=[...new Set(answers.map(a=>a.domain).filter(Boolean))].slice(0,3);
   return{title:"Your daily Metria update",body:"Review your recent "+(domains.length?domains.join(", "):"wellness")+" pattern and add today's signal."};
 }
 async function showDailyNotification(){
-  if(!("serviceWorker"in navigator)||Notification.permission!=="granted")return;
+  if(!("serviceWorker"in navigator)||!("Notification"in window)||Notification.permission!=="granted")return;
   const reg=await navigator.serviceWorker.ready,copy=dailyCopy();
   await reg.showNotification(copy.title,{body:copy.body,icon:"icon.svg?v=2",badge:"icon.svg?v=2",tag:"metria-daily",renotify:false,data:{url:"app.html#daily"}});
   if("setAppBadge"in navigator)navigator.setAppBadge(1).catch(()=>{});
-  state.reminders.lastSent=new Date().toISOString().slice(0,10);save();
+  reminders.lastSent=new Date().toISOString().slice(0,10);saveReminders();
 }
 function nextDue(time){
   const [h,m]=time.split(":").map(Number),d=new Date();d.setHours(h,m,0,0);if(d<=new Date())d.setDate(d.getDate()+1);return d;
@@ -123,30 +126,30 @@ function nextDue(time){
 let reminderTimer;
 async function scheduleReminder(){
   clearTimeout(reminderTimer);
-  if(!state.reminders?.enabled)return;
-  const due=nextDue(state.reminders.time||"09:00");
+  if(!reminders?.enabled)return;
+  const due=nextDue(reminders.time||"09:00");
   notifyStatus.textContent="Next reminder: "+due.toLocaleString([],{weekday:"short",hour:"2-digit",minute:"2-digit"});
   reminderTimer=setTimeout(async()=>{await showDailyNotification();scheduleReminder()},Math.min(due-Date.now(),2147483647));
   try{
     const reg=await navigator.serviceWorker.ready;
-    if("periodicSync"in reg)await reg.periodicSync.register("metria-daily",{minInterval:24*60*60*1000});
+    if("periodicSync"in reg){await reg.periodicSync.register("metria-daily",{minInterval:24*60*60*1000})}else{notifyStatus.textContent="Reminder enabled. On iPhone, open Metria daily to guarantee delivery; background push requires a connected push service."}
   }catch{}
 }
-if(state.reminders?.time)notifyTime.value=state.reminders.time;
-if(state.reminders?.enabled){notifyButton.textContent="Daily reminders enabled";scheduleReminder()}
-notifyTime.addEventListener("change",()=>{state.reminders={...(state.reminders||{}),time:notifyTime.value};save();scheduleReminder()});
+if(reminders?.time)notifyTime.value=reminders.time;
+if(reminders?.enabled){notifyButton.textContent="Daily reminders enabled";scheduleReminder()}
+notifyTime.addEventListener("change",()=>{reminders={...(reminders||{}),time:notifyTime.value};saveReminders();scheduleReminder()});
 notifyButton.addEventListener("click",async()=>{
   if(!("Notification"in window)){notifyStatus.textContent="Notifications require an installed, supported PWA.";return}
   const permission=await Notification.requestPermission();
   if(permission!=="granted"){notifyStatus.textContent="Notifications are blocked in device settings.";return}
-  state.reminders={enabled:true,time:notifyTime.value||"09:00",lastSent:state.reminders?.lastSent||null};save();
+  reminders={enabled:true,time:notifyTime.value||"09:00",lastSent:reminders?.lastSent||null};saveReminders();
   notifyButton.textContent="Daily reminders enabled";
   notifyStatus.textContent="Notifications enabled. Metria will keep lock-screen text privacy-safe.";
   await showDailyNotification();scheduleReminder();
 });
 document.addEventListener("visibilitychange",()=>{
-  if(document.visibilityState!=="visible"||!state.reminders?.enabled)return;
-  const today=new Date().toISOString().slice(0,10),[h,m]=(state.reminders.time||"09:00").split(":").map(Number),now=new Date();
-  if(state.reminders.lastSent!==today&&(now.getHours()>h||(now.getHours()===h&&now.getMinutes()>=m)))showDailyNotification();
+  if(document.visibilityState!=="visible"||!reminders?.enabled)return;
+  const today=new Date().toISOString().slice(0,10),[h,m]=(reminders.time||"09:00").split(":").map(Number),now=new Date();
+  if(reminders.lastSent!==today&&(now.getHours()>h||(now.getHours()===h&&now.getMinutes()>=m)))showDailyNotification();
   if("clearAppBadge"in navigator)navigator.clearAppBadge().catch(()=>{});
 });
