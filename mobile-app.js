@@ -74,7 +74,20 @@ if(installButton)installButton.onclick=async()=>{
  if(isIOS){alert("To install Metria in Safari: tap Share, choose Add to Home Screen, then tap Add.");return;}
  alert("Use your browser menu and choose Install app or Add to Home screen.");
 };
-if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+if("serviceWorker"in navigator){
+ let refreshing=false;
+ navigator.serviceWorker.addEventListener("controllerchange",()=>{
+  if(refreshing)return;
+  refreshing=true;
+  window.location.reload();
+ });
+ navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(reg=>{
+  reg.update().catch(()=>{});
+  const check=()=>reg.update().catch(()=>{});
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")check()});
+  window.setInterval(check,15*60*1000);
+ }).catch(()=>{});
+}
 let recognition=null;if("SpeechRecognition"in window||"webkitSpeechRecognition"in window){const R=window.SpeechRecognition||window.webkitSpeechRecognition;recognition=new R();recognition.lang="en-AU";recognition.interimResults=false;recognition.onresult=e=>{$("#chatInput").value=e.results[0][0].transcript};recognition.onend=()=>$("#speech").textContent="Start speech input";}$("#speech").onclick=()=>{if(!recognition){$("#speech").textContent="Speech input unavailable";return}$("#speech").textContent="Listening…";recognition.start()};
 let stream=null,landmarker=null,lastTime=-1;
 const video=$("#video"),canvas=$("#mesh"),box=$("#videoBox");
