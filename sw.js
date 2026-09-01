@@ -1,5 +1,5 @@
 const CACHE='metria-runtime-v1';
-const CORE=['app.html','manifest.webmanifest','icon.svg','mobile-app.js'];
+const CORE=['app.html','manifest.webmanifest','icon.svg','mobile-app.js','metria-avatar.js'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(
@@ -38,4 +38,37 @@ self.addEventListener('fetch',event=>{
         throw new Error('Offline and resource not cached');
       })
   );
+});
+
+self.addEventListener('periodicsync',event=>{
+  if(event.tag!=='metria-daily')return;
+  event.waitUntil(self.registration.showNotification('Your daily Metria update',{
+    body:'Your private check-in and pattern review are ready.',
+    icon:'icon.svg?v=2',
+    badge:'icon.svg?v=2',
+    tag:'metria-daily',
+    data:{url:'app.html#daily'}
+  }));
+});
+
+self.addEventListener('push',event=>{
+  let data={};
+  try{data=event.data?.json()||{}}catch{data={body:event.data?.text()}}
+  event.waitUntil(self.registration.showNotification(data.title||'Your daily Metria update',{
+    body:data.body||'Your private check-in and pattern review are ready.',
+    icon:'icon.svg?v=2',
+    badge:'icon.svg?v=2',
+    tag:'metria-daily',
+    data:{url:data.url||'app.html#daily'}
+  }));
+});
+
+self.addEventListener('notificationclick',event=>{
+  event.notification.close();
+  const target=new URL(event.notification.data?.url||'app.html',self.location.href).href;
+  event.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{
+    const existing=list.find(client=>client.url.startsWith(new URL('app.html',self.location.href).href));
+    if(existing){existing.navigate(target);return existing.focus()}
+    return clients.openWindow(target);
+  }));
 });
