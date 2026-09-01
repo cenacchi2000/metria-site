@@ -56,7 +56,7 @@ const choose=t=>{state.answers.push({date:new Date().toISOString(),question:q[1]
 q[3].forEach(t=>{const b=document.createElement("button");b.textContent=t;b.onclick=()=>choose(t);$("#choices").appendChild(b)});
 $("#answerForm").onsubmit=e=>{e.preventDefault();const v=$("#answer").value.trim();if(v){choose(v);$("#answer").value=""}};
 document.querySelectorAll("[data-prompt]").forEach(b=>b.onclick=()=>{$("#chatInput").value=b.dataset.prompt;$("#chatInput").focus()});
-$("#chatForm").onsubmit=e=>{e.preventDefault();const v=$("#chatInput").value.trim();if(!v)return;$("#chatInput").value="";const log=$("#chatlog"),u=document.createElement("div");u.className="bubble you";u.textContent=v;log.appendChild(u);state.answers.push({date:new Date().toISOString(),question:"conversation",text:v,domain:"conversation"});save();const a=document.createElement("div");a.className="bubble";a.textContent="I mapped that to your local context. I’ll compare it with future check-ins and show the evidence behind any emerging pattern.";log.appendChild(a);analysis();log.scrollTop=log.scrollHeight};
+$("#chatForm").onsubmit=e=>{e.preventDefault();const v=$("#chatInput").value.trim();if(!v)return;$("#chatInput").value="";const log=$("#chatlog"),u=document.createElement("div");u.className="bubble you";u.textContent=v;log.appendChild(u);state.answers.push({date:new Date().toISOString(),question:"conversation",text:v,domain:"conversation"});save();const a=document.createElement("div");a.className="bubble";const name=window.metriaProfile?.name;a.textContent=(name?name+", I":"I")+" mapped that to your context. I’ll compare it with future check-ins and explain sustained change from your own baseline.";log.appendChild(a);if("speechSynthesis"in window){speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(a.textContent);utterance.lang="en-AU";utterance.rate=.96;window.metriaTwinSpeaking=true;utterance.onend=()=>window.metriaTwinSpeaking=false;speechSynthesis.speak(utterance)}analysis();log.scrollTop=log.scrollHeight};
 let installEvent;
 const installButton=$("#install");
 const ua=navigator.userAgent;
@@ -89,25 +89,22 @@ if("serviceWorker"in navigator){
  }).catch(()=>{});
 }
 let recognition=null;if("SpeechRecognition"in window||"webkitSpeechRecognition"in window){const R=window.SpeechRecognition||window.webkitSpeechRecognition;recognition=new R();recognition.lang="en-AU";recognition.interimResults=false;recognition.onresult=e=>{$("#chatInput").value=e.results[0][0].transcript};recognition.onend=()=>$("#speech").textContent="Start speech input";}$("#speech").onclick=()=>{if(!recognition){$("#speech").textContent="Speech input unavailable";return}$("#speech").textContent="Listening…";recognition.start()};
-let stream=null,landmarker=null,lastTime=-1;
+let stream=null,landmarker=null,lastTime=-1,scanFrames=[],frozenPoints=JSON.parse(localStorage.getItem("metriaFaceGeometryV1")||"null"),idleFrame=0;
 const video=$("#video"),canvas=$("#mesh"),box=$("#videoBox");
-const drawFallback=()=>{
- const ratio=Math.min(devicePixelRatio||1,2),w=canvas.clientWidth||320,h=canvas.clientHeight||240;
- canvas.width=w*ratio;canvas.height=h*ratio;const c=canvas.getContext("2d");c.setTransform(ratio,0,0,ratio,0,0);c.clearRect(0,0,w,h);
- const cx=w/2,cy=h/2,rx=Math.min(w*.29,130),ry=Math.min(h*.39,150),phase=performance.now()/900;
- c.strokeStyle="rgba(185,243,108,.68)";c.lineWidth=1.1;c.shadowColor="#8273df";c.shadowBlur=7;c.beginPath();c.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);c.stroke();c.shadowBlur=0;
- for(let ring=0;ring<5;ring++){for(let i=0;i<18;i++){const a=i/18*Math.PI*2+phase*.08*(ring%2?1:-1),x=cx+Math.cos(a)*(rx*(.25+ring*.17)),y=cy+Math.sin(a)*(ry*(.25+ring*.17));c.fillStyle=i%5?"#b9f36c":"#ffaaa5";c.beginPath();c.arc(x,y,1.7,0,7);c.fill()}}
- c.strokeStyle="rgba(255,170,165,.6)";[[cx-rx*.42,cy-ry*.18,cx-rx*.1,cy-ry*.18],[cx+rx*.1,cy-ry*.18,cx+rx*.42,cy-ry*.18],[cx,cy-ry*.08,cx,cy+ry*.2],[cx-rx*.3,cy+ry*.4,cx+rx*.3,cy+ry*.4]].forEach(a=>{c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(a[2],a[3]);c.stroke()});
-};
-const draw=pts=>{
- if(!pts?.length){drawFallback();return}
- const ratio=Math.min(devicePixelRatio||1,2),w=canvas.clientWidth||320,h=canvas.clientHeight||240;
- canvas.width=w*ratio;canvas.height=h*ratio;const c=canvas.getContext("2d");c.setTransform(ratio,0,0,ratio,0,0);c.clearRect(0,0,w,h);
- const minX=Math.min(...pts.map(p=>p.x)),maxX=Math.max(...pts.map(p=>p.x)),minY=Math.min(...pts.map(p=>p.y)),maxY=Math.max(...pts.map(p=>p.y)),s=Math.min(w/(maxX-minX+.12),h/(maxY-minY+.12)),cx=(minX+maxX)/2,cy=(minY+maxY)/2,p=pts.map(x=>({x:w/2+(x.x-cx)*s,y:h/2+(x.y-cy)*s,z:x.z||0}));
- c.strokeStyle="rgba(185,243,108,.58)";c.lineWidth=Math.max(.5,w/500);
- for(let i=0;i<p.length;i+=4)for(let j=i+4;j<p.length;j+=4){const dx=p[i].x-p[j].x,dy=p[i].y-p[j].y;if(dx*dx+dy*dy<Math.pow(Math.min(w,h)*.09,2)){c.beginPath();c.moveTo(p[i].x,p[i].y);c.lineTo(p[j].x,p[j].y);c.stroke()}}
- p.forEach((x,i)=>{c.fillStyle=i%11?"#b9f36c":"#ffaaa5";c.shadowColor=c.fillStyle;c.shadowBlur=i%11?3:7;c.beginPath();c.arc(x.x,x.y,i%11?1:1.7,0,7);c.fill()});c.shadowBlur=0;
-};
+const drawFallback=()=>drawTwin(frozenPoints,false);
+function drawTwin(raw,live=true){
+ const ratio=Math.min(devicePixelRatio||1,2),w=canvas.clientWidth||320,h=canvas.clientHeight||240;canvas.width=w*ratio;canvas.height=h*ratio;const c=canvas.getContext("2d");c.setTransform(ratio,0,0,ratio,0,0);c.clearRect(0,0,w,h);
+ const cx=w/2,cy=h*.48,rx=Math.min(w*.27,126),ry=rx*1.28,phase=performance.now()/1000,yaw=live?0:(phase*.16%(Math.PI*2)),breath=1+Math.sin(phase*1.35)*.009;
+ c.strokeStyle="rgba(185,243,108,.52)";c.fillStyle="#b9f36c";c.lineWidth=Math.max(.55,w/620);c.shadowColor="#b9f36c";c.shadowBlur=4;
+ for(let lat=-7;lat<=7;lat++){let previous=null;for(let lon=0;lon<=40;lon++){const u=lon/40*Math.PI*2+yaw,v=lat/8*Math.PI/2,x3=Math.cos(v)*Math.sin(u),z3=Math.cos(v)*Math.cos(u),y3=Math.sin(v),perspective=1/(1.18-z3*.12),pt={x:cx+x3*rx*breath*perspective,y:cy+y3*ry*breath*perspective,z:z3};if(previous){c.globalAlpha=.18+.34*(z3+1)/2;c.beginPath();c.moveTo(previous.x,previous.y);c.lineTo(pt.x,pt.y);c.stroke()}previous=pt;if(lon%4===0){c.beginPath();c.arc(pt.x,pt.y,.85,0,7);c.fill()}}}
+ for(let lon=0;lon<18;lon++){let previous=null;for(let lat=-9;lat<=9;lat++){const u=lon/18*Math.PI*2+yaw,v=lat/18*Math.PI,x3=Math.cos(v)*Math.sin(u),z3=Math.cos(v)*Math.cos(u),y3=Math.sin(v),perspective=1/(1.18-z3*.12),pt={x:cx+x3*rx*breath*perspective,y:cy+y3*ry*breath*perspective,z:z3};if(previous){c.globalAlpha=.16+.3*(z3+1)/2;c.beginPath();c.moveTo(previous.x,previous.y);c.lineTo(pt.x,pt.y);c.stroke()}previous=pt}}
+ c.globalAlpha=1;
+ if(raw?.length&&Math.cos(yaw)>.05){const pts=raw.map(p=>Array.isArray(p)?{x:p[0],y:p[1],z:p[2]||0}:p),minX=Math.min(...pts.map(p=>p.x)),maxX=Math.max(...pts.map(p=>p.x)),minY=Math.min(...pts.map(p=>p.y)),maxY=Math.max(...pts.map(p=>p.y)),mx=(minX+maxX)/2,my=(minY+maxY)/2,blink=.96+.04*Math.abs(Math.sin(phase*.72)),speak=window.metriaTwinSpeaking?Math.abs(Math.sin(phase*9))*.035:0,mapped=pts.map((p,i)=>{let nx=(p.x-mx)/(maxX-minX||1),ny=(p.y-my)/(maxY-minY||1);if((i>=61&&i<=91)||(i>=291&&i<=321))ny+=speak;return{x:cx+nx*rx*1.38*Math.cos(yaw),y:cy+ny*ry*1.55*blink,z:p.z||0}});
+  c.globalAlpha=Math.min(1,Math.max(.2,Math.cos(yaw)));for(let i=0;i<mapped.length;i+=3)for(let j=i+3;j<mapped.length;j+=3){const dx=mapped[i].x-mapped[j].x,dy=mapped[i].y-mapped[j].y;if(dx*dx+dy*dy<Math.pow(Math.min(w,h)*.075,2)){c.beginPath();c.moveTo(mapped[i].x,mapped[i].y);c.lineTo(mapped[j].x,mapped[j].y);c.stroke()}}mapped.forEach((p,i)=>{if(i%2)return;c.beginPath();c.arc(p.x,p.y,1.05,0,7);c.fill()})}
+ c.globalAlpha=1;c.shadowBlur=0;
+}
+const draw=pts=>{if(!pts?.length){drawFallback();return}drawTwin(pts,true);scanFrames.push(pts.map(p=>[+p.x.toFixed(4),+p.y.toFixed(4),+(p.z||0).toFixed(4)]));if(scanFrames.length>36)scanFrames.shift();if(scanFrames.length===36){frozenPoints=scanFrames[18];localStorage.setItem("metriaFaceGeometryV1",JSON.stringify(frozenPoints));$("#videoLabel").style.display="none"}};
+function idleLoop(){if(!stream){drawTwin(frozenPoints,false);idleFrame=requestAnimationFrame(idleLoop)}}if(frozenPoints)idleLoop();
 const loop=()=>{
  if(!stream)return;
  if(video.readyState>=2&&video.currentTime!==lastTime){
@@ -125,6 +122,7 @@ const loadLandmarker=async()=>{
 };
 $("#camera").onclick=async()=>{
  if(stream)return;
+ cancelAnimationFrame(idleFrame);$("#videoLabel").style.display="grid";
  if(!navigator.mediaDevices?.getUserMedia){$("#videoLabel").textContent="Camera unavailable · use HTTPS and enable camera access";return}
  $("#camera").disabled=true;$("#videoLabel").textContent="Requesting camera access…";
  try{
@@ -136,7 +134,7 @@ $("#camera").onclick=async()=>{
  }catch(e){stream?.getTracks().forEach(t=>t.stop());stream=null;$("#camera").disabled=false;$("#videoLabel").textContent=e?.name==="NotAllowedError"?"Camera blocked · enable it in iPhone settings":"Camera unavailable · try closing other camera apps"}
 };
 $("#cameraStop").onclick=()=>{
- stream?.getTracks().forEach(t=>t.stop());stream=null;landmarker=null;video.srcObject=null;video.classList.remove("active");$("#camera").disabled=false;$("#cameraStop").disabled=true;$("#videoLabel").textContent="Camera off · nothing is captured until you opt in";canvas.getContext("2d")?.clearRect(0,0,canvas.width,canvas.height)
+ stream?.getTracks().forEach(t=>t.stop());stream=null;landmarker=null;video.srcObject=null;video.classList.remove("active");$("#camera").disabled=false;$("#cameraStop").disabled=true;$("#videoLabel").style.display=frozenPoints?"none":"grid";$("#videoLabel").textContent=frozenPoints?"":"Camera off · scan again when ready";cancelAnimationFrame(idleFrame);idleLoop()
 };
 analysis();
 })();
