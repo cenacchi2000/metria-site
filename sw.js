@@ -1,5 +1,5 @@
-const CACHE='metria-runtime-v2-dense-head';
-const CORE=['app.html','manifest.webmanifest','icon.svg','mobile-app.js','metria-avatar.js'];
+const CACHE='metria-runtime-v3-living-twin';
+const CORE=['app.html','manifest.webmanifest','icon.svg','metria-profile.js','mobile-app.js','metria-avatar.js'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(
