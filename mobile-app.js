@@ -57,7 +57,18 @@ q[3].forEach(t=>{const b=document.createElement("button");b.textContent=t;b.oncl
 $("#answerForm").onsubmit=e=>{e.preventDefault();const v=$("#answer").value.trim();if(v){choose(v);$("#answer").value=""}};
 document.querySelectorAll("[data-prompt]").forEach(b=>b.onclick=()=>{$("#chatInput").value=b.dataset.prompt;$("#chatInput").focus()});
 $("#chatForm").onsubmit=e=>{e.preventDefault();const v=$("#chatInput").value.trim();if(!v)return;$("#chatInput").value="";const log=$("#chatlog"),u=document.createElement("div");u.className="bubble you";u.textContent=v;log.appendChild(u);state.answers.push({date:new Date().toISOString(),question:"conversation",text:v,domain:"conversation"});save();const a=document.createElement("div");a.className="bubble";a.textContent="I mapped that to your local context. I’ll compare it with future check-ins and show the evidence behind any emerging pattern.";log.appendChild(a);analysis();log.scrollTop=log.scrollHeight};
-let installEvent;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvent=e;$("#install").style.display="block"});$("#install").onclick=async()=>{if(installEvent){await installEvent.prompt();installEvent=null;$("#install").style.display="none"}};
+let installEvent;
+const installButton=$("#install");
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.MSStream;
+const isStandalone=window.navigator.standalone===true||window.matchMedia("(display-mode: standalone)").matches;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvent=e;if(installButton){installButton.style.display="block";installButton.textContent="Install Metria on this device"}});
+if(isIOS&&!isStandalone&&installButton){installButton.style.display="block";installButton.textContent="Add Metria to Home Screen";}
+if(isStandalone&&installButton){installButton.style.display="none";}
+if(installButton)installButton.onclick=async()=>{
+ if(installEvent){await installEvent.prompt();installEvent=null;installButton.style.display="none";return;}
+ if(isIOS){alert("To install Metria on iPhone: tap the Share button in Safari, choose Add to Home Screen, then tap Add.");return;}
+ alert("Use your browser menu and choose Install app or Add to Home screen.");
+};
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 let recognition=null;if("SpeechRecognition"in window||"webkitSpeechRecognition"in window){const R=window.SpeechRecognition||window.webkitSpeechRecognition;recognition=new R();recognition.lang="en-AU";recognition.interimResults=false;recognition.onresult=e=>{$("#chatInput").value=e.results[0][0].transcript};recognition.onend=()=>$("#speech").textContent="Start speech input";}$("#speech").onclick=()=>{if(!recognition){$("#speech").textContent="Speech input unavailable";return}$("#speech").textContent="Listening…";recognition.start()};
 let stream=null,landmarker=null;const video=$("#video"),canvas=$("#mesh"),box=$("#videoBox");
