@@ -125,7 +125,5 @@ $("#camera").onclick=async()=>{
 $("#cameraStop").onclick=()=>{
  stream?.getTracks().forEach(t=>t.stop());stream=null;landmarker=null;video.srcObject=null;video.classList.remove("active");$("#camera").disabled=false;$("#cameraStop").disabled=true;$("#videoLabel").textContent="Camera off · nothing is captured until you opt in";canvas.getContext("2d")?.clearRect(0,0,canvas.width,canvas.height)
 };
-analysis();loop()}catch(e){stream?.getTracks().forEach(t=>t.stop());stream=null;$("#videoLabel").textContent="Camera unavailable · check site permission"}};
-$("#cameraStop").onclick=()=>{stream?.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;video.classList.remove("active");$("#camera").disabled=false;$("#cameraStop").disabled=true;$("#videoLabel").textContent="Camera off · nothing is captured until you opt in";const c=canvas.getContext("2d");c.clearRect(0,0,canvas.width,canvas.height)};
 analysis();
 })();
