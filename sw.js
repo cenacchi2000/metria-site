@@ -1,1 +1,41 @@
-const CACHE='metria-twin-v6';const CORE=['app.html','manifest.webmanifest?v=2','icon.svg?v=2','mobile-app.js'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE))));self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(c=>c||fetch(e.request).then(r=>{const copy=r.clone();caches.open(CACHE).then(cache=>cache.put(e.request,copy));return r}).catch(()=>caches.match('app.html'))))});
+const CACHE='metria-runtime-v1';
+const CORE=['app.html','manifest.webmanifest','icon.svg','mobile-app.js'];
+
+self.addEventListener('install',event=>{
+  event.waitUntil(
+    caches.open(CACHE)
+      .then(cache=>cache.addAll(CORE.map(url=>new Request(url,{cache:'reload'}))))
+      .then(()=>self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate',event=>{
+  event.waitUntil(
+    caches.keys()
+      .then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key))))
+      .then(()=>self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch',event=>{
+  if(event.request.method!=='GET')return;
+  const url=new URL(event.request.url);
+  if(url.origin!==self.location.origin)return;
+
+  event.respondWith(
+    fetch(event.request,{cache:'no-store'})
+      .then(response=>{
+        if(response&&response.ok){
+          const copy=response.clone();
+          caches.open(CACHE).then(cache=>cache.put(event.request,copy));
+        }
+        return response;
+      })
+      .catch(async()=>{
+        const cached=await caches.match(event.request,{ignoreSearch:true});
+        if(cached)return cached;
+        if(event.request.mode==='navigate')return caches.match('app.html');
+        throw new Error('Offline and resource not cached');
+      })
+  );
+});
