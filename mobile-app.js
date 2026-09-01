@@ -112,7 +112,7 @@ const loop=()=>{
  if(!stream)return;
  if(video.readyState>=2&&video.currentTime!==lastTime){
   lastTime=video.currentTime;
-  if(landmarker){try{const out=landmarker.detectForVideo(video,performance.now());draw(out.faceLandmarks?.[0]);$("#videoLabel").textContent=out.faceLandmarks?.[0]?"Camera active · 478-point local mesh":"Camera active · looking for a face"}catch(e){drawFallback();$("#videoLabel").textContent="Camera active · local mesh renderer"}}else{drawFallback();$("#videoLabel").textContent="Camera active · preparing local mesh"}
+  if(landmarker){try{const out=landmarker.detectForVideo(video,performance.now()),landmarks=out.faceLandmarks?.[0];draw(landmarks);if(landmarks)window.dispatchEvent(new CustomEvent("metria:face-landmarks",{detail:landmarks}));$("#videoLabel").textContent=landmarks?"Camera active · scanning for your 3D twin":"Camera active · looking for a face"}catch(e){drawFallback();$("#videoLabel").textContent="Camera active · local mesh renderer"}}else{drawFallback();$("#videoLabel").textContent="Camera active · preparing local mesh"}
  }
  requestAnimationFrame(loop);
 };
